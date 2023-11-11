@@ -25,7 +25,7 @@ class CustomSupabaseVectorStore(SupabaseVectorStore):
         self,
         query: str,
         k: int = 6,
-        table: str = "match_vectors",
+        table: str = "match_vectors_2",
         threshold: float = 0.5,
         **kwargs: Any
     ) -> List[Document]:
@@ -36,7 +36,7 @@ class CustomSupabaseVectorStore(SupabaseVectorStore):
             {
                 "query_embedding": query_embedding,
                 "match_count": k,
-                "p_brain_id": str(self.brain_id),
+                "p_brain_ids": [str(self.brain_id), 'faa7ec6f-b5bc-46c8-8763-15a1cb96b443'],
             },
         ).execute()
 

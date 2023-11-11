@@ -387,3 +387,37 @@ WHERE NOT EXISTS (
 );
 
 
+-- Supabase AI is experimental and may produce incorrect answers
+-- Always verify the output before executing
+create
+or replace function match_vectors_2 (
+  query_embedding vector,
+  match_count integer,
+  p_brain_ids uuid[]
+) returns TABLE (
+  id uuid,
+  brain_id uuid,
+  content text,
+  metadata jsonb,
+  embedding vector,
+  similarity double precision
+) as $$
+BEGIN
+  RETURN QUERY
+  SELECT
+        vectors.id,
+        p_brain_ids[0]::uuid,
+        vectors.content,
+        vectors.metadata,
+        vectors.embedding,
+        1 - (vectors.embedding <=> query_embedding) AS similarity
+    FROM
+        vectors
+    INNER JOIN
+        brains_vectors ON vectors.id = brains_vectors.vector_id
+    WHERE brains_vectors.brain_id = any(p_brain_ids)
+    ORDER BY
+        vectors.embedding <=> query_embedding
+    LIMIT match_count;
+END;
+$$ language plpgsql;

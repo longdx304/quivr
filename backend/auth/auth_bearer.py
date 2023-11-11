@@ -39,6 +39,8 @@ class AuthBearer(HTTPBearer):
     ) -> UserIdentity:
         if os.environ.get("AUTHENTICATE") == "false":
             return self.get_test_user()
+        if os.environ.get("AUTHENTICATE") == "access-web":
+            return self.get_access_web_user()
         elif verify_token(token):
             return decode_access_token(token)
         elif await verify_api_key(
@@ -49,6 +51,11 @@ class AuthBearer(HTTPBearer):
             )
         else:
             raise HTTPException(status_code=401, detail="Invalid token or api key.")
+
+    def get_access_web_user(self) -> UserIdentity:
+        return UserIdentity(
+            email=os.environ.get("ACCESS_WEB_EMAIL"), id=os.environ.get("ACCESS_WEB_ID")
+        )
 
     def get_test_user(self) -> UserIdentity:
         return UserIdentity(
