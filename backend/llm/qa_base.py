@@ -70,6 +70,7 @@ class QABaseBrainPicking(BaseModel):
     callbacks: List[
         AsyncIteratorCallbackHandler
     ] = None  # pyright: ignore reportPrivateUsage=none
+    brain_ids: List[str] = None
 
     def _determine_api_key(self, openai_api_key, user_openai_api_key):
         """If user provided an API key, use it."""
@@ -109,6 +110,7 @@ class QABaseBrainPicking(BaseModel):
         chat_id: str,
         streaming: bool = False,
         prompt_id: Optional[UUID] = None,
+        brain_ids: List[str] = None,
         **kwargs,
     ):
         super().__init__(
@@ -116,11 +118,13 @@ class QABaseBrainPicking(BaseModel):
             brain_id=brain_id,
             chat_id=chat_id,
             streaming=streaming,
+            brain_ids=brain_ids,
             **kwargs,
         )
         self.supabase_client = self._create_supabase_client()
         self.vector_store = self._create_vector_store()
         self.prompt_id = prompt_id
+        self.brain_ids = brain_ids
 
     @property
     def prompt_to_use(self):
@@ -141,6 +145,7 @@ class QABaseBrainPicking(BaseModel):
             self.embeddings,  # type: ignore
             table_name="vectors",
             brain_id=self.brain_id,
+            brain_ids=self.brain_ids
         )
 
     def _create_llm(

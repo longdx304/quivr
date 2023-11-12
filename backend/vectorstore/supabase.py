@@ -10,6 +10,7 @@ class CustomSupabaseVectorStore(SupabaseVectorStore):
     """A custom vector store that uses the match_vectors table instead of the vectors table."""
 
     brain_id: str = "none"
+    brain_ids: List[str] = []
 
     def __init__(
         self,
@@ -17,9 +18,11 @@ class CustomSupabaseVectorStore(SupabaseVectorStore):
         embedding: Embeddings,
         table_name: str,
         brain_id: str = "none",
+        brain_ids: List[str] = []
     ):
         super().__init__(client, embedding, table_name)
         self.brain_id = brain_id
+        self.brain_ids = brain_ids
 
     def similarity_search(
         self,
@@ -36,7 +39,7 @@ class CustomSupabaseVectorStore(SupabaseVectorStore):
             {
                 "query_embedding": query_embedding,
                 "match_count": k,
-                "p_brain_ids": [str(self.brain_id), 'faa7ec6f-b5bc-46c8-8763-15a1cb96b443'],
+                "p_brain_ids": self.brain_ids,
             },
         ).execute()
 

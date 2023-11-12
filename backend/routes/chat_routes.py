@@ -182,6 +182,7 @@ async def create_question_handler(
     | UUID
     | None = Query(..., description="The ID of the brain"),
     current_user: UserIdentity = Depends(get_current_user),
+    brain_ids: List[str] = []
 ) -> GetChatHistoryOutput:
     """
     Add a new question to the chat.
@@ -200,6 +201,9 @@ async def create_question_handler(
             user_id=current_user.id,
             required_roles=[RoleEnum.Viewer, RoleEnum.Editor, RoleEnum.Owner],
         )
+
+    j = await request.json()
+    brain_ids = j['brain_ids']
 
     current_user.openai_api_key = request.headers.get("Openai-Api-Key")
     brain = Brain(id=brain_id)
@@ -250,6 +254,7 @@ async def create_question_handler(
                 brain_id=str(brain_id),
                 user_openai_api_key=current_user.openai_api_key,  # pyright: ignore reportPrivateUsage=none
                 prompt_id=chat_question.prompt_id,
+                brain_ids=brain_ids
             )
         else:
             gpt_answer_generator = HeadlessQA(
@@ -285,7 +290,7 @@ async def create_stream_question_handler(
     brain_id: NullableUUID
     | UUID
     | None = Query(..., description="The ID of the brain"),
-    current_user: UserIdentity = Depends(get_current_user),
+    current_user: UserIdentity = Depends(get_current_user)
 ) -> StreamingResponse:
     if brain_id:
         validate_brain_authorization(
@@ -303,6 +308,8 @@ async def create_stream_question_handler(
         email=current_user.email,
         openai_api_key=current_user.openai_api_key,
     )
+    j = await request.json()
+    brain_ids = j['brain_ids']
 
     userSettings = userDailyUsage.get_user_settings()
     if not current_user.openai_api_key and brain_id:
@@ -346,6 +353,7 @@ async def create_stream_question_handler(
                 user_openai_api_key=current_user.openai_api_key,  # pyright: ignore reportPrivateUsage=none
                 streaming=True,
                 prompt_id=chat_question.prompt_id,
+                brain_ids=brain_ids
             )
         else:
             gpt_answer_generator = HeadlessQA(
