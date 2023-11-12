@@ -3,7 +3,7 @@ from uuid import UUID
 from auth import AuthBearer, get_current_user
 from fastapi import APIRouter, Depends, HTTPException
 from logger import get_logger
-from models import UserIdentity, UserUsage
+from models import UserIdentity
 from models.brain_entity import PublicBrain
 from models.databases.supabase.brains import (
     BrainQuestionRequest,
@@ -77,19 +77,19 @@ async def create_new_brain(
     brain: CreateBrainProperties, current_user: UserIdentity = Depends(get_current_user)
 ):
     """Create a new brain for the user."""
-    user_brains = get_user_brains(current_user.id)
-    user_usage = UserUsage(
-        id=current_user.id,
-        email=current_user.email,
-        openai_api_key=current_user.openai_api_key,
-    )
-    user_settings = user_usage.get_user_settings()
+    # user_brains = get_user_brains(current_user.id)
+    # user_usage = UserUsage(
+    #     id=current_user.id,
+    #     email=current_user.email,
+    #     openai_api_key=current_user.openai_api_key,
+    # )
+    # user_settings = user_usage.get_user_settings()
 
-    if len(user_brains) >= user_settings.get("max_brains", 5):
-        raise HTTPException(
-            status_code=429,
-            detail=f"Maximum number of brains reached ({user_settings.get('max_brains', 5)}).",
-        )
+    # if len(user_brains) >= user_settings.get("max_brains", 5):
+    #     raise HTTPException(
+    #         status_code=429,
+    #         detail=f"Maximum number of brains reached ({user_settings.get('max_brains', 5)}).",
+    #     )
 
     new_brain = create_brain(brain)
     if get_user_default_brain(current_user.id):
