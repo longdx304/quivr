@@ -98,6 +98,16 @@ async def healthz():
     return {"status": "ok"}
 
 
+@chat_router.post("/chat-by-ids", dependencies=[Depends(AuthBearer())], tags=["Chat"])
+async def get_chat_by_ids(request: Request, current_user: UserIdentity = Depends(get_current_user)):
+
+    j = await request.json()
+    chat_ids = j['chat_ids']
+
+    chats = get_user_chats(str(current_user.id), chat_ids)
+    return {"chats": chats}
+
+
 # get all chats
 @chat_router.get("/chat", dependencies=[Depends(AuthBearer())], tags=["Chat"])
 async def get_chats(current_user: UserIdentity = Depends(get_current_user)):

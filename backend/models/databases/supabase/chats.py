@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 
 from models.chat import Chat
@@ -66,13 +66,14 @@ class Chats(Repository):
 
         return reponse
 
-    def get_user_chats(self, user_id: str):
+    def get_user_chats(self, user_id: str, chat_ids: List[str] = None):
+        query = self.db.from_("chats").select("chat_id,user_id,creation_time,chat_name").filter("user_id", "eq", user_id).order("creation_time", desc=False)
+
+        if (chat_ids != None):
+            query.in_("chat_id", chat_ids)
+
         response = (
-            self.db.from_("chats")
-            .select("chat_id,user_id,creation_time,chat_name")
-            .filter("user_id", "eq", user_id)
-            .order("creation_time", desc=False)
-            .execute()
+            query.execute()
         )
         return response
 
