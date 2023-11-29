@@ -4,7 +4,8 @@ from uuid import UUID
 
 from auth import AuthBearer, get_current_user
 from celery_worker import process_file_and_notify
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile
+from typing import Annotated
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, Form
 from logger import get_logger
 from models import Brain, UserIdentity, UserUsage
 from models.databases.supabase.knowledge import CreateKnowledgeProperties
@@ -38,6 +39,8 @@ async def upload_file(
     chat_id: Optional[UUID] = Query(None, description="The ID of the chat"),
     enable_summarization: bool = False,
     current_user: UserIdentity = Depends(get_current_user),
+    userId: Annotated[int, Form()] = None,
+    description: Annotated[str, Form()] = None,
 ):
     validate_brain_authorization(
         brain_id, current_user.id, [RoleEnum.Editor, RoleEnum.Owner]
@@ -103,6 +106,8 @@ async def upload_file(
         extension=os.path.splitext(
             uploadFile.filename  # pyright: ignore reportPrivateUsage=none
         )[-1].lower(),
+        created_by=userId,
+        description=description
     )
 
     added_knowledge = add_knowledge(knowledge_to_add)
