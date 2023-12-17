@@ -9,6 +9,10 @@ from repository.files.generate_file_signed_url import generate_file_signed_url
 from repository.knowledge.get_all_knowledge import get_all_knowledge
 from repository.knowledge.get_knowledge import get_knowledge
 from repository.knowledge.remove_knowledge import remove_knowledge
+from repository.knowledge.update_knowledge import (
+    KnowledgeUpdatableProperties,
+    update_knowledge,
+)
 from routes.authorizations.brain_authorization import (
     RoleEnum,
     has_brain_authorization,
@@ -36,6 +40,31 @@ async def list_knowledge_in_brain_endpoint(
     logger.info("List of knowledge from knowledge table", knowledges)
 
     return {"knowledges": knowledges}
+
+
+@knowledge_router.put(
+    "/knowledge/{knowledge_id}",
+    dependencies=[
+        Depends(AuthBearer()),
+        Depends(has_brain_authorization(RoleEnum.Owner)),
+    ],
+    tags=["Knowledge"],
+)
+def update_endpoint(
+    knowledge_id: UUID,
+    knowledge_update_data: KnowledgeUpdatableProperties,
+    brain_id: UUID = Query(..., description="The ID of the brain"),
+    current_user: UserIdentity = Depends(get_current_user),
+):
+    """
+    Update a specific knowledge from a brain.
+    """
+
+    validate_brain_authorization(brain_id=brain_id, user_id=current_user.id)
+
+    update_knowledge(knowledge_id, knowledge_update_data)
+
+    return {"message": f"Knowledge {knowledge_id} has been updated"}
 
 
 @knowledge_router.delete(
