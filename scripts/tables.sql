@@ -243,6 +243,9 @@ CREATE TABLE IF NOT EXISTS knowledge (
   url TEXT,
   brain_id UUID NOT NULL REFERENCES brains(brain_id),
   extension TEXT NOT NULL,
+  creation_time TIMESTAMPTZ DEFAULT current_timestamp,
+  created_by INT,
+  description TEXT,
   CHECK ((file_name IS NOT NULL AND url IS NULL) OR (file_name IS NULL AND url IS NOT NULL))
 );
 
