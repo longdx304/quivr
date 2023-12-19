@@ -15,7 +15,7 @@ class CreateBrainProperties(BaseModel):
     status: Optional[str] = "private"
     model: Optional[str]
     temperature: Optional[float] = 0.0
-    max_tokens: Optional[int] = 256
+    max_tokens: Optional[int] = 1000
     openai_api_key: Optional[str] = None
     prompt_id: Optional[UUID] = None
 
