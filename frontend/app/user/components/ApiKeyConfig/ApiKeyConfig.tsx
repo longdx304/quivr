@@ -27,7 +27,7 @@ export const ApiKeyConfig = (): JSX.Element => {
 
   return (
     <>
-      <h3 className="font-semibold mb-2">Quivr {t("apiKey")}</h3>
+      <h3 className="font-semibold mb-2">DOBTech {t("apiKey")}</h3>
 
       <div>
         {apiKey === "" ? (

@@ -6,8 +6,8 @@ import Button from "@/lib/components/ui/Button";
 import { useOnboardingTracker } from "@/lib/hooks/useOnboardingTracker";
 import { useStreamText } from "@/lib/hooks/useStreamText";
 
-import { stepsContainerStyle } from "./styles";
 import { MessageRow } from "../QADisplay";
+import { stepsContainerStyle } from "./styles";
 
 export const Onboarding = (): JSX.Element => {
   const { t } = useTranslation(["chat"]);
@@ -47,7 +47,7 @@ export const Onboarding = (): JSX.Element => {
 
   return (
     <div className="flex flex-col gap-2 mb-3">
-      <MessageRow speaker={"assistant"} brainName={"Quivr"}>
+      <MessageRow speaker={"assistant"} brainName={"DOBTech"}>
         <div className={stepsContainerStyle}>
           <p>{titleStream}</p>
           <div>
