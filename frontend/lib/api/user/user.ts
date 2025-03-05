@@ -1,26 +1,26 @@
-import { AxiosInstance } from "axios";
-import { UUID } from "crypto";
+import { AxiosInstance } from 'axios';
+import { UUID } from 'crypto';
 
-import { UserStats } from "@/lib/types/User";
+import { UserStats } from '@/lib/types/User';
 
 export enum CompanySize {
-  One = "1-10",
-  Two = "10-25",
-  Three = "25-50",
-  Four = "50-100",
-  Five = "100-250",
-  Six = "250-500",
-  Seven = "500-1000",
-  Eight = "1000-5000",
-  Nine = "+5000",
+  One = '1-10',
+  Two = '10-25',
+  Three = '25-50',
+  Four = '50-100',
+  Five = '100-250',
+  Six = '250-500',
+  Seven = '500-1000',
+  Eight = '1000-5000',
+  Nine = '+5000',
 }
 
 export enum UsagePurpose {
-  Business = "Business",
-  NGO = "NGO",
-  Personal = "Personal",
-  Student = "Student",
-  Teacher = "Teacher",
+  Business = 'Business',
+  NGO = 'NGO',
+  Personal = 'Personal',
+  Student = 'Student',
+  Teacher = 'Teacher',
 }
 
 export type UserIdentityUpdatableProperties = {
@@ -34,6 +34,19 @@ export type UserIdentityUpdatableProperties = {
 export type UserIdentity = {
   id: UUID;
   onboarded: boolean;
+  username: string;
+};
+
+export type CreateUserRequest = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  brains: string[];
+};
+
+export type CreateUserResponse = {
+  id: string;
+  email: string;
   username: string;
 };
 
@@ -51,9 +64,19 @@ export const getUserIdentity = async (
   return data;
 };
 
+export const createUser = async (
+  userData: CreateUserRequest,
+  axiosInstance: AxiosInstance
+): Promise<CreateUserResponse> => {
+  const response = await axiosInstance.post('/user/create', userData);
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return response.data;
+};
+
 export const getUser = async (
   axiosInstance: AxiosInstance
-): Promise<UserStats> => (await axiosInstance.get<UserStats>("/user")).data;
+): Promise<UserStats> => (await axiosInstance.get<UserStats>('/user')).data;
 
 export const deleteUserData = async (
   axiosInstance: AxiosInstance
@@ -63,4 +86,4 @@ export const deleteUserData = async (
 
 export const getUserCredits = async (
   axiosInstance: AxiosInstance
-): Promise<number> => (await axiosInstance.get<number>("/user/credits")).data;
+): Promise<number> => (await axiosInstance.get<number>('/user/credits')).data;
