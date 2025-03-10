@@ -65,11 +65,32 @@ jobs:
           sed -i '/\[db\]/,/\[.*\]/s/enabled = false/enabled = true/' supabase/config.toml
           sed -i '/\[storage\]/,/\[.*\]/s/enabled = false/enabled = true/' supabase/config.toml
           supabase start
-          # Use our custom NLTK download approach instead of the problematic one
-          rye run python .github/workflows/nltk_fix.py
+          
+          # Create NLTK fix script directly in the workflow
+          cat > nltk_fix.py << 'EOL'
+          import nltk
+          import ssl
+          
+          try:
+              _create_unverified_https_context = ssl._create_unverified_context
+          except AttributeError:
+              pass
+          else:
+              ssl._create_default_https_context = _create_unverified_https_context
+          
+          # Download required NLTK data packages directly
+          nltk.download('punkt')
+          nltk.download('averaged_perceptron_tagger')
+          nltk.download('stopwords')
+          EOL
+          
+          # Run the NLTK fix script
+          rye run python nltk_fix.py
+          
           # Fallback to direct downloads if needed
           rye run python -c "import nltk; nltk.download('punkt', download_dir='/tmp/nltk_data')"
           rye run python -c "import nltk; nltk.download('averaged_perceptron_tagger', download_dir='/tmp/nltk_data')"
+          
           # Set NLTK_DATA environment variable to use our downloaded data
           export NLTK_DATA=/tmp/nltk_data
           rye test -p ${{ matrix.project }}
