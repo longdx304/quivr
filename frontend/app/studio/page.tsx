@@ -1,22 +1,22 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { AddBrainModal } from "@/lib/components/AddBrainModal";
-import { useBrainCreationContext } from "@/lib/components/AddBrainModal/brainCreation-provider";
-import { PageHeader } from "@/lib/components/PageHeader/PageHeader";
-import { UploadDocumentModal } from "@/lib/components/UploadDocumentModal/UploadDocumentModal";
-import { Tabs } from "@/lib/components/ui/Tabs/Tabs";
-import { useBrainContext } from "@/lib/context/BrainProvider/hooks/useBrainContext";
-import { useKnowledgeToFeedContext } from "@/lib/context/KnowledgeToFeedProvider/hooks/useKnowledgeToFeedContext";
-import { useUserData } from "@/lib/hooks/useUserData";
-import { ButtonType } from "@/lib/types/QuivrButton";
-import { Tab } from "@/lib/types/Tab";
+import { AddBrainModal } from '@/lib/components/AddBrainModal';
+import { useBrainCreationContext } from '@/lib/components/AddBrainModal/brainCreation-provider';
+import { PageHeader } from '@/lib/components/PageHeader/PageHeader';
+import { UploadDocumentModal } from '@/lib/components/UploadDocumentModal/UploadDocumentModal';
+import { Tabs } from '@/lib/components/ui/Tabs/Tabs';
+import { useBrainContext } from '@/lib/context/BrainProvider/hooks/useBrainContext';
+import { useKnowledgeToFeedContext } from '@/lib/context/KnowledgeToFeedProvider/hooks/useKnowledgeToFeedContext';
+import { useUserData } from '@/lib/hooks/useUserData';
+import { ButtonType } from '@/lib/types/QuivrButton';
+import { Tab } from '@/lib/types/Tab';
 
-import { Analytics } from "./BrainsTabs/components/Analytics/Analytics";
-import { ManageBrains } from "./BrainsTabs/components/ManageBrains/ManageBrains";
-import styles from "./page.module.scss";
+import { Analytics } from './BrainsTabs/components/Analytics/Analytics';
+import { ManageBrains } from './BrainsTabs/components/ManageBrains/ManageBrains';
+import styles from './page.module.scss';
 
 const Studio = (): JSX.Element => {
 	const { t } = useTranslation(["translation", "brain", "knowledge"]);

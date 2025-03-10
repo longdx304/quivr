@@ -9,9 +9,11 @@ import { QuivrLogo } from "@/lib/assets/QuivrLogo";
 import { nonProtectedPaths } from "@/lib/config/routesConfig";
 import { useMenuContext } from "@/lib/context/MenuProvider/hooks/useMenuContext";
 import { useNotificationsContext } from "@/lib/context/NotificationsProvider/hooks/useNotificationsContext";
+import { useSupabase } from "@/lib/context/SupabaseProvider";
 import { useUserSettingsContext } from "@/lib/context/UserSettingsProvider/hooks/useUserSettingsContext";
 
 import styles from "./Menu.module.scss";
+import { AdministratorButton } from "./components/AdministratorButton/AdministratorButton";
 import { AnimatedDiv } from "./components/AnimationDiv";
 import { DiscussionButton } from "./components/DiscussionButton/DiscussionButton";
 import { HomeButton } from "./components/HomeButton/HomeButton";
@@ -34,6 +36,8 @@ export const Menu = (): JSX.Element => {
   const [isLogoHovered, setIsLogoHovered] = useState<boolean>(false);
   const { isDarkMode } = useUserSettingsContext();
   const flagEnabled = useFeatureFlagEnabled("show-quality-assistant");
+  const { session } = useSupabase();
+  const isSuperAdmin = session?.user.user_metadata.role === "super_admin";
 
   useChatsList();
 
@@ -49,6 +53,7 @@ export const Menu = (): JSX.Element => {
     "studio",
     "/quality-assistant",
     "/user",
+    "/administrator",
   ];
 
   const isMenuDisplayed = displayedOnPages.some((page) =>
@@ -92,6 +97,7 @@ export const Menu = (): JSX.Element => {
                   <StudioButton />
                   <NotificationsButton />
                   <ThreadsButton />
+                  {isSuperAdmin && <AdministratorButton />}
                 </div>
                 <div className={styles.block}>
                   {!!showUpgradeButton && <UpgradeToPlusButton />}

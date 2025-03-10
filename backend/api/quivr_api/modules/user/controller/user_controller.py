@@ -1,20 +1,25 @@
-from typing import Annotated
+from typing import Annotated, List
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, HTTPException
 
 from quivr_api.middlewares.auth import AuthBearer, get_current_user
 from quivr_api.modules.brain.service.brain_user_service import BrainUserService
 from quivr_api.modules.dependencies import get_service
 from quivr_api.modules.models.service.model_service import ModelService
-from quivr_api.modules.user.dto.inputs import UserUpdatableProperties
+from quivr_api.modules.user.dto.inputs import CreateUserRequest, UserUpdatableProperties, UpdateUserRequest
 from quivr_api.modules.user.entity.user_identity import UserIdentity
 from quivr_api.modules.user.repository.users import Users
+from quivr_api.modules.user.service.user_service import UserService
 from quivr_api.modules.user.service.user_usage import UserUsage
+from quivr_api.logger import get_logger
+from quivr_api.modules.user.dto.inputs import ResetPasswordRequest
 
+logger = get_logger(__name__)
 user_router = APIRouter()
 brain_user_service = BrainUserService()
 ModelServiceDep = Annotated[ModelService, Depends(get_service(ModelService))]
 user_repository = Users()
+user_service = UserService()
 
 
 @user_router.get("/user", dependencies=[Depends(AuthBearer())], tags=["User"])
@@ -124,3 +129,82 @@ def get_user_credits(
     Get user remaining credits.
     """
     return user_repository.get_user_credits(current_user.id)
+
+
+@user_router.post("/user/create", tags=["User"])
+async def create_user_endpoint(
+    user_data: CreateUserRequest,
+    request: Request,
+    current_user: UserIdentity = Depends(get_current_user),
+):
+    """
+    Create a new user.
+
+    - `user_data`: The user data to create.
+    - `current_user`: The current authenticated user.
+
+    This endpoint creates a new user in the system. It requires admin privileges.
+    """
+    return user_service.create_user(user_data)
+
+
+@user_router.put("/user/update", tags=["User"])
+async def update_user_endpoint(
+    user_data: UpdateUserRequest,
+    request: Request,
+    current_user: UserIdentity = Depends(get_current_user),
+):
+    """
+    Update an existing user.
+
+    - `user_data`: The updated user data.
+    - `current_user`: The current authenticated user.
+
+    This endpoint updates an existing user in the system. It requires admin privileges.
+    """
+    try:
+        logger.info(f"Updating user {user_data.id}. Requested by user: {current_user.id}")
+        return user_service.update_user(user_data)
+    except Exception as e:
+        logger.error(f"Error updating user: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating user: {str(e)}")
+
+
+@user_router.get("/users", dependencies=[Depends(AuthBearer())], tags=["User"])
+async def get_all_users_endpoint(
+    current_user: UserIdentity = Depends(get_current_user),
+) -> List[UserIdentity]:
+    """
+    Get all users in the system.
+    
+    - `current_user`: The current authenticated user.
+    
+    This endpoint retrieves a list of all users in the system. It requires authentication.
+    """
+    try:
+        logger.info(f"Getting all users. Requested by user: {current_user.id}")
+        return user_service.get_all_users()
+    except Exception as e:
+        logger.error(f"Error getting all users: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting users: {str(e)}")
+
+
+@user_router.post("/user/reset-password", dependencies=[Depends(AuthBearer())], tags=["User"])
+async def reset_password_endpoint(
+    password_data: ResetPasswordRequest,
+    current_user: UserIdentity = Depends(get_current_user),
+):
+    """
+    Reset user password.
+    
+    - `password_data`: The password data containing current and new password.
+    - `current_user`: The current authenticated user.
+    
+    This endpoint allows a user to reset their own password. It requires authentication.
+    """
+    try:
+        logger.info(f"Resetting password for user: {current_user.id}")
+        return user_service.reset_password(current_user.id, password_data)
+    except Exception as e:
+        logger.error(f"Error resetting password: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
