@@ -122,7 +122,7 @@ const Search = (): JSX.Element => {
             <div className={styles.quivr_text}>
               <span>{t("talk_to", { ns: "login" })} </span>
               <span className={styles.quivr_text_primary}>
-                {projectName ? projectName : "Dobbie"}
+                {projectName ? projectName : "Traphaco.AI"}
               </span>
             </div>
           </div>
