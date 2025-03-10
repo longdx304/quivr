@@ -10,17 +10,17 @@ export const QuivrLogo = ({
   size,
   color = "white",
 }: QuivrLogoProps): JSX.Element => {
-  const [src, setSrc] = useState<string>("/logo-white.svg");
+  const [src, setSrc] = useState<string>("/medzavy.webp");
 
   useEffect(() => {
     if (color === "primary") {
-      setSrc("/logo-primary.svg");
+      setSrc("/medzavy.webp");
     } else if (color === "accent") {
-      setSrc("/logo-accent.svg");
+      setSrc("/medzavy.webp");
     } else if (color === "black") {
-      setSrc("/logo-black.svg");
+      setSrc("/medzavy.webp");
     } else {
-      setSrc("/logo-white.svg");
+      setSrc("/medzavy.webp");
     }
   }, [color]);
 
