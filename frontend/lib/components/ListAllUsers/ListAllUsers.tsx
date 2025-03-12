@@ -1,12 +1,12 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useUserApi } from '@/lib/api/user/useUserApi';
 import { UserIdentity } from '@/lib/api/user/user';
 import { CreateUserModal } from '@/lib/components/CreateUserModal/CreateUserModal';
-import Card from '@/lib/components/ui/Card';
 import { Icon } from '@/lib/components/ui/Icon/Icon';
 import Spinner from '@/lib/components/ui/Spinner';
 import Table from '@/lib/components/ui/Table/Table';
@@ -40,7 +40,7 @@ export const ListAllUsers = (): JSX.Element => {
         return 'Invalid date';
       }
 
-      return format(date, 'dd MMM yyyy, h:mm:ss a');
+      return format(date, 'dd MMM yyyy, h:mm:ss a', { locale: vi });
     } catch (e) {
       return 'Invalid date';
     }
@@ -212,7 +212,7 @@ export const ListAllUsers = (): JSX.Element => {
     return (
       <div className={styles.loading_container}>
         <Spinner />
-        <p>Loading users...</p>
+        <p>{"Đang tải dữ liệu"}</p>
       </div>
     );
   }
@@ -227,7 +227,7 @@ export const ListAllUsers = (): JSX.Element => {
   }
 
   return (
-    <Card className={styles.users_card}>
+    <div className={styles.users_card}>
       <div className={styles.card_header}>
         <div className={styles.header_left}>
           <h2>{t("all_user", { ns: "user" })}</h2>
@@ -258,6 +258,6 @@ export const ListAllUsers = (): JSX.Element => {
           onSuccess={refreshData}
         />
       )}
-    </Card>
+    </div>
   );
 };
