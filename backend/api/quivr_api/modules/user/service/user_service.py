@@ -162,7 +162,7 @@ class UserService:
         html_body = f"""
         <p>Chào {fullNameUser},</p>
 
-        <p>Chúng tôi mời bạn tham gia vào <b>Dự án Medzavy</b>.</p>
+        <p>Chúng tôi mời bạn tham gia vào <b>Dự án Traphaco</b>.</p>
 
         <p>Thông tin đăng nhập của bạn:</p>
 
@@ -172,20 +172,20 @@ class UserService:
         </ul>
 
         <p>Để bắt đầu, vui lòng nhấn vào liên kết dưới đây:</p>
-        <p><a href='{os.getenv("QUIVR_DOMAIN")}' style="color: blue; font-weight: bold;">Bấm vào đây để tham gia Dự án Medzavy</a></p>
+        <p><a href='{os.getenv("QUIVR_DOMAIN")}' style="color: blue; font-weight: bold;">Bấm vào đây để tham gia Dự án Traphaco</a></p>
 
         <p><b>Lưu ý:</b> Vì lý do bảo mật, hãy thay đổi mật khẩu sau khi đăng nhập lần đầu.</p>
 
-        <p>Trân trọng,<br>Đội ngũ Medzavy</p>
+        <p>Trân trọng,<br>Đội ngũ Traphaco</p>
         """
 
         try:
             r = send_email(
                 {
-                    "from": "no-reply@medzavy.app",
+                    "from": "no-reply@traphaco.com",
                     "to": [email],
-                    "subject": "Medzavy - Thư mời tham gia dự án",
-                    "reply_to": "no-reply@medzavy.app",
+                    "subject": "Traphaco - Thư mời tham gia dự án",
+                    "reply_to": "no-reply@traphaco.com",
                     "html": html_body,
                 }
             )
