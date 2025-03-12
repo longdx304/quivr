@@ -13,6 +13,7 @@ import styles from "./page.module.scss";
 const Administrator = (): JSX.Element => {
   const { t } = useTranslation(["user"]);
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const buttons: ButtonType[] = [
     {
@@ -25,6 +26,11 @@ const Administrator = (): JSX.Element => {
     },
   ];
 
+  const handleUserCreated = () => {
+    // Increment refresh trigger to cause ListAllUsers to re-render and fetch data
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
   return (
     <div className={styles.page_wrapper}>
       <div className={styles.page_header}>
@@ -35,11 +41,12 @@ const Administrator = (): JSX.Element => {
         />
       </div>
       <div className={styles.content_wrapper}>
-        <ListAllUsers />
+        <ListAllUsers key={refreshTrigger} />
       </div>
       <CreateUserModal
         isOpen={isCreateUserModalOpen}
         setOpen={setIsCreateUserModalOpen}
+        onSuccess={handleUserCreated}
       />
     </div>
   );

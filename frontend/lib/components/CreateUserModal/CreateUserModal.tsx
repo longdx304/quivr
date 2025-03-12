@@ -74,7 +74,7 @@ export const CreateUserModal = ({
   const lastName = watch("lastName");
   const email = watch("email");
 
-  // Effect to populate form when in edit mode
+  // Effect to populate form when in edit mode or reset when modal opens/closes
   useEffect(() => {
     if (isEditMode && userData) {
       // Extract first and last name from username
@@ -98,8 +98,15 @@ export const CreateUserModal = ({
         }));
         setSelectedBrains(userBrainOptions);
       }
+    } else {
+      // Reset form when not in edit mode or when modal closes
+      if (!isOpen) {
+        reset();
+        setSelectedBrains([]);
+        setError(null);
+      }
     }
-  }, [isEditMode, userData, setValue]);
+  }, [isEditMode, userData, setValue, reset, isOpen]);
 
   const onSubmit = async (data: UserFormProps): Promise<void> => {
     try {
@@ -122,18 +129,18 @@ export const CreateUserModal = ({
         console.log("User created successfully");
       }
 
+      // Close the modal
       setOpen(false);
-
-      // Call onSuccess callback if provided
+      
+      // Reset form
+      reset();
+      setSelectedBrains([]);
+      
+      // Call onSuccess callback if provided to refresh the user list
       if (onSuccess) {
         onSuccess();
       }
-
-      // Reset form if not in edit mode
-      if (!isEditMode) {
-        reset();
-        setSelectedBrains([]);
-      }
+      
       // eslint-disable-next-line @typescript-eslint/no-shadow
     } catch (error) {
       console.error(
@@ -164,6 +171,13 @@ export const CreateUserModal = ({
     setValue(field, value, { shouldValidate: true });
   };
 
+  const handleCancel = (): void => {
+    // Reset form and close modal
+    reset();
+    setSelectedBrains([]);
+    setOpen(false);
+  };
+
   return (
     <FormProvider {...methods}>
       <Modal
@@ -176,7 +190,7 @@ export const CreateUserModal = ({
             <Button
               type='button'
               variant='secondary'
-              onClick={() => setOpen(false)}
+              onClick={handleCancel}
             >
               {t("cancel", { ns: "user" })}
             </Button>

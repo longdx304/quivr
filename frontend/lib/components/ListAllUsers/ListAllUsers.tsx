@@ -1,17 +1,17 @@
-import { ColumnDef } from '@tanstack/react-table';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
-import { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
-import { useUserApi } from '@/lib/api/user/useUserApi';
-import { UserIdentity } from '@/lib/api/user/user';
-import { CreateUserModal } from '@/lib/components/CreateUserModal/CreateUserModal';
-import { Icon } from '@/lib/components/ui/Icon/Icon';
-import Spinner from '@/lib/components/ui/Spinner';
-import Table from '@/lib/components/ui/Table/Table';
+import { useUserApi } from "@/lib/api/user/useUserApi";
+import { UserIdentity } from "@/lib/api/user/user";
+import { CreateUserModal } from "@/lib/components/CreateUserModal/CreateUserModal";
+import { Icon } from "@/lib/components/ui/Icon/Icon";
+import Spinner from "@/lib/components/ui/Spinner";
+import Table from "@/lib/components/ui/Table/Table";
 
-import styles from './ListAllUsers.module.scss';
+import styles from "./ListAllUsers.module.scss";
 
 export const ListAllUsers = (): JSX.Element => {
   const { t } = useTranslation(["user"]);
@@ -30,36 +30,36 @@ export const ListAllUsers = (): JSX.Element => {
 
   const formatDate = (dateString: string | undefined): string => {
     if (!dateString) {
-      return 'Never';
+      return "Never";
     }
 
     try {
       const date = new Date(dateString);
 
       if (isNaN(date.getTime())) {
-        return 'Invalid date';
+        return "Invalid date";
       }
 
-      return format(date, 'dd MMM yyyy, h:mm:ss a', { locale: vi });
+      return format(date, "dd MMM yyyy, h:mm:ss a", { locale: vi });
     } catch (e) {
-      return 'Invalid date';
+      return "Invalid date";
     }
   };
 
   const columns = useMemo<ColumnDef<UserIdentity>[]>(
     () => [
       {
-        accessorKey: 'username',
+        accessorKey: "username",
         header: t("name", { ns: "user" }),
-        cell: ({ row }) => row.original.username || 'N/A',
+        cell: ({ row }) => row.original.username || "N/A",
       },
       {
-        accessorKey: 'email',
+        accessorKey: "email",
         header: t("email", { ns: "user" }),
-        cell: ({ row }) => row.original.email ?? 'N/A',
+        cell: ({ row }) => row.original.email ?? "N/A",
       },
       {
-        accessorKey: 'brains',
+        accessorKey: "brains",
         header: t("brains", { ns: "user" }),
         cell: ({ row }) => {
           const brains = row.original.brains ?? [];
@@ -78,9 +78,10 @@ export const ListAllUsers = (): JSX.Element => {
                 }}
               >
                 {brains.length > 0
-                  ? `Admin và ${brains.length} brain${brains.length > 1 ? 's' : ''
-                  } khác`
-                  : 'Không có brain'}{' '}
+                  ? `Admin và ${brains.length} brain${
+                      brains.length > 1 ? "s" : ""
+                    } khác`
+                  : "Không có brain"}{" "}
                 <Icon name='chevronDown' size='small' color='primary' />
               </div>
 
@@ -107,12 +108,12 @@ export const ListAllUsers = (): JSX.Element => {
         },
       },
       {
-        accessorKey: 'last_sign_in_at',
+        accessorKey: "last_sign_in_at",
         header: t("last_login", { ns: "user" }),
         cell: ({ row }) => formatDate(row.original.last_sign_in_at),
       },
       {
-        id: 'actions',
+        id: "actions",
         header: t("actions", { ns: "user" }),
         cell: ({ row }) => {
           const userId = row.original.id;
@@ -173,8 +174,8 @@ export const ListAllUsers = (): JSX.Element => {
       setUsers(fetchedUsers);
       setError(null);
     } catch (err) {
-      console.error('Error fetching users:', err);
-      setError('Failed to load users. Please try again later.');
+      console.error("Error fetching users:", err);
+      setError("Failed to load users. Please try again later.");
     } finally {
       setIsLoading(false);
     }
@@ -201,10 +202,10 @@ export const ListAllUsers = (): JSX.Element => {
       }
     };
 
-    document.addEventListener('click', handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
 
     return () => {
-      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener("click", handleClickOutside);
     };
   }, [showBrainsDropdown, showActionsDropdown]);
 
@@ -239,7 +240,7 @@ export const ListAllUsers = (): JSX.Element => {
           disabled={isLoading}
         >
           <Icon name='sync' size='small' color='primary' />
-          {isLoading ? 'Loading...' : 'Làm mới'}
+          {isLoading ? "Loading..." : "Làm mới"}
         </button>
       </div>
       <Table
