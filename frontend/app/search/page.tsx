@@ -103,9 +103,6 @@ const Search = (): JSX.Element => {
     }
   }, [pathname, session]);
 
-  console.log("session", session);
-  console.log("userData", userData);
-
   return (
     <div className={styles.main_container}>
       <div className={styles.page_header}>

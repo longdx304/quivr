@@ -15,9 +15,7 @@ RUN apt-get clean && apt-get update && apt-get install -y \
     build-essential \
     libtool \
     python-dev \
-    build-essential \
     wget \
-    # Additional dependencies for document handling
     libmagic-dev \
     poppler-utils \
     tesseract-ocr \
@@ -25,22 +23,22 @@ RUN apt-get clean && apt-get update && apt-get install -y \
     libpq-dev \
     gcc \
     libhdf5-serial-dev \
-    pandoc && \
-    rm -rf /var/lib/apt/lists/* && apt-get clean
+    pandoc \
+    && rm -rf /var/lib/apt/lists/* && apt-get clean
 
 # Install Supabase CLI
 RUN ARCHITECTURE=$(uname -m) && \
     if [ "$ARCHITECTURE" = "x86_64" ]; then \
-    wget https://github.com/supabase/cli/releases/download/v1.163.6/supabase_1.163.6_linux_amd64.deb && \
-    dpkg -i supabase_1.163.6_linux_amd64.deb && \
-    rm supabase_1.163.6_linux_amd64.deb; \
+    wget -q https://github.com/supabase/cli/releases/download/v1.163.6/supabase_1.163.6_linux_amd64.deb -O supabase.deb && \
+    dpkg -i supabase.deb && \
+    rm supabase.deb; \
     elif [ "$ARCHITECTURE" = "aarch64" ]; then \
-    wget https://github.com/supabase/cli/releases/download/v1.163.6/supabase_1.163.6_linux_arm64.deb && \
-    dpkg -i supabase_1.163.6_linux_arm64.deb && \
-    rm supabase_1.163.6_linux_arm64.deb; \
+    wget -q https://github.com/supabase/cli/releases/download/v1.163.6/supabase_1.163.6_linux_arm64.deb -O supabase.deb && \
+    dpkg -i supabase.deb && \
+    rm supabase.deb; \
     fi
 
-COPY requirements.lock  pyproject.toml README.md ./
+COPY requirements.lock pyproject.toml README.md ./
 COPY api/pyproject.toml api/README.md ./api/
 COPY api/quivr_api/__init__.py ./api/quivr_api/__init__.py
 COPY core/pyproject.toml core/README.md ./core/
@@ -52,10 +50,13 @@ COPY worker/diff-assistant/quivr_diff_assistant/__init__.py ./worker/diff-assist
 
 RUN PYTHONDONTWRITEBYTECODE=1 pip install --no-cache-dir -r requirements.lock
 
-RUN playwright install --with-deps && \
-    python -c "from unstructured.nlp.tokenize import download_nltk_packages; download_nltk_packages()" && \
-    python -c "import nltk;nltk.download('punkt_tab'); nltk.download('averaged_perceptron_tagger_eng')"
+# RUN playwright install --with-deps && \
+#     python -c "from unstructured.nlp.tokenize import download_nltk_packages; download_nltk_packages()" && \
+#     python -c "import nltk;nltk.download('punkt_tab'); nltk.download('averaged_perceptron_tagger_eng')"
 
+RUN playwright install --with-deps && \
+    python -c "import nltk; nltk.download('punkt'); nltk.download('averaged_perceptron_tagger')" && \
+    python -c "import nltk; nltk.download('punkt_tab'); nltk.download('averaged_perceptron_tagger_eng')"
 
 ENV PYTHONPATH=/app
 
