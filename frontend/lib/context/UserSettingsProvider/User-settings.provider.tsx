@@ -1,7 +1,6 @@
 import { createContext, useEffect, useState } from "react";
 
 import { useUserApi } from "@/lib/api/user/useUserApi";
-import { parseBoolean } from "@/lib/helpers/parseBoolean";
 
 type UserSettingsContextType = {
   isDarkMode: boolean;
@@ -22,13 +21,13 @@ export const UserSettingsProvider = ({
   const { getUserCredits } = useUserApi();
   const [remainingCredits, setRemainingCredits] = useState<number | null>(null);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      const localIsDarkMode = localStorage.getItem("isDarkMode");
+    // if (typeof window !== "undefined") {
+    //   const localIsDarkMode = localStorage.getItem("isDarkMode");
 
-      return localIsDarkMode !== null
-        ? parseBoolean(localIsDarkMode)
-        : window.matchMedia("(prefers-color-scheme: dark)").matches;
-    }
+    //   return localIsDarkMode !== null
+    //     ? parseBoolean(localIsDarkMode)
+    //     : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    // }
 
     return false;
   });
