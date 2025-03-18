@@ -23,6 +23,8 @@ export const defineMaxTokens = (
       return 2000;
     case "gpt-4o":
       return 4000;
+    case "gpt-4o-mini":
+      return 4000;
     default:
       return 2000;
   }
