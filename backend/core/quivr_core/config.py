@@ -361,7 +361,7 @@ class RerankerConfig(QuivrBaseConfig):
 
     supplier: DefaultRerankers | None = None
     model: str | None = None
-    top_n: int = 5
+    top_n: int = 10
     api_key: str | None = None
 
     def __init__(self, **data):
