@@ -93,20 +93,7 @@ class RAGService:
         chat_history = ChatHistoryCore(
             brain_id=self.brain.brain_id,
             chat_id=self.chat_id,
-            window_size=10,  # Sliding window size
-            relevance_threshold=0.7,  # Minimum relevance score
         )
-
-        # Process and score chat history
-        for message in transformed_history:
-            relevance_score = self._compute_message_relevance(message)
-            if relevance_score >= chat_history.relevance_threshold:
-                chat_history.append(message, relevance_score=relevance_score)
-
-        # Add memory compression if history is too long
-        if len(chat_history) > chat_history.window_size * 2:
-            chat_history.compress_history()
-
         return chat_history
 
     def _compute_message_relevance(self, message) -> float:
@@ -123,7 +110,7 @@ class RAGService:
         return retrieval_config
 
     async def _build_retrieval_config(self) -> RetrievalConfig:
-        model = await self.model_service.get_model(self.model_to_use)
+        model = await self.model_service.get_model(self.model_to_use) if self.model_to_use else None
         if model is None:
             raise ValueError(f"Cannot get model {self.model_to_use}")
         api_key = os.getenv(model.env_variable_name, "not-defined")

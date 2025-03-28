@@ -1,4 +1,5 @@
 from enum import Enum
+import os
 
 import yaml
 from pydantic import BaseModel
@@ -23,5 +24,5 @@ class MegaparseBaseConfig(BaseModel):
 
 class MegaparseConfig(MegaparseBaseConfig):
     strategy: str = "fast"
-    llama_parse_api_key: str | None = None
-    pdf_parser: PdfParser = PdfParser.UNSTRUCTURED
+    llama_parse_api_key: str | None = os.getenv("LLAMA_PARSE_API_KEY")
+    pdf_parser: PdfParser = PdfParser.LLAMA_PARSE
