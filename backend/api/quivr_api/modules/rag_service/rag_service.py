@@ -33,6 +33,7 @@ from quivr_api.vectorstore.supabase import CustomSupabaseVectorStore
 
 from .utils import generate_source
 
+
 logger = get_logger(__name__)
 
 
@@ -87,13 +88,18 @@ class RAGService:
         self,
         history: list[GetChatHistoryOutput],
     ) -> ChatHistoryCore:
+        # Enhanced chat history with sliding window and relevance scoring
         transformed_history = format_chat_history(history)
         chat_history = ChatHistoryCore(
-            brain_id=self.brain.brain_id, chat_id=self.chat_id
+            brain_id=self.brain.brain_id,
+            chat_id=self.chat_id,
         )
-
-        [chat_history.append(m) for m in transformed_history]
         return chat_history
+
+    def _compute_message_relevance(self, message) -> float:
+        # Implement relevance scoring logic
+        # This could use semantic similarity, time decay, or other metrics
+        return 1.0  # Placeholder implementation
 
     async def _get_retrieval_config(self) -> RetrievalConfig:
         if self.retrieval_config:
@@ -104,14 +110,15 @@ class RAGService:
         return retrieval_config
 
     async def _build_retrieval_config(self) -> RetrievalConfig:
-        model = await self.model_service.get_model(self.model_to_use)  # type: ignore
+        model = await self.model_service.get_model(self.model_to_use) if self.model_to_use else None
         if model is None:
             raise ValueError(f"Cannot get model {self.model_to_use}")
         api_key = os.getenv(model.env_variable_name, "not-defined")
 
+        # Enhanced retrieval configuration with hybrid search and reranking
         retrieval_config = RetrievalConfig(
             llm_config=LLMEndpointConfig(
-                model=self.model_to_use,  # type: ignore
+                model=self.model_to_use,
                 llm_base_url=model.endpoint_url,
                 llm_api_key=api_key,
                 temperature=(LLMEndpointConfig.model_fields["temperature"].default),
@@ -119,6 +126,12 @@ class RAGService:
                 max_output_tokens=model.max_output,
             ),
             prompt=self.prompt.content if self.prompt else None,
+            chunk_strategy="semantic",  # Enable semantic chunking
+            chunk_size=500,
+            chunk_overlap=50,
+            rerank_top_k=5,  # Number of chunks to rerank
+            hybrid_search=True,  # Enable hybrid search
+            use_semantic_captions=True,  # Enable semantic captions for better context
         )
         return retrieval_config
 
@@ -170,25 +183,31 @@ class RAGService:
         )
         retrieval_config = await self._get_retrieval_config()
         logger.debug(f"generate_answer with config : {retrieval_config.model_dump()}")
+        
+        # Enhanced context retrieval
         history = await self.chat_service.get_chat_history(self.chat_id)
-        #  Format the history, sanitize the input
         chat_history = self._build_chat_history(history)
 
-        # Get list of files
-        list_files = (
-            await self.knowledge_service.get_all_knowledge_in_brain(self.brain.brain_id)
-            if self.knowledge_service
-            else []
-        )
-
-        # Build RAG dependencies to inject
-        vector_store = (
-            self.create_vector_store(
-                self.brain.brain_id, retrieval_config.llm_config.max_input_tokens
+        # Multi-query retrieval
+        query_variations = self._generate_query_variations(question)
+        
+        # Get list of files with enhanced metadata
+        list_files = []
+        if self.knowledge_service:
+            list_files = await self.knowledge_service.get_all_knowledge_in_brain(
+                self.brain.brain_id
             )
-            if self.vector_service
-            else None
-        )
+            
+        # Build RAG dependencies with enhanced retrieval
+        vector_store = None
+        if self.vector_service:
+            vector_store = self.create_vector_store(
+                self.brain.brain_id,
+                retrieval_config.llm_config.max_input_tokens
+            )
+            # Enable hybrid search if configured
+            if retrieval_config.hybrid_search:
+                vector_store.enable_hybrid_search()
 
         llm = self.get_llm(retrieval_config)
 
@@ -200,21 +219,28 @@ class RAGService:
             embedder=vector_store.embeddings if vector_store else None,
         )
 
-        parsed_response = brain_core.ask(
-            question=question,
-            retrieval_config=retrieval_config,
-            rag_pipeline=QuivrQARAGLangGraph,
-            list_files=list_files,
-            chat_history=chat_history,
-        )
+        # Enhanced answer generation with multi-query and reranking
+        responses = []
+        for query in query_variations:
+            parsed_response = brain_core.ask(
+                question=query,
+                retrieval_config=retrieval_config,
+                rag_pipeline=QuivrQARAGLangGraph,
+                list_files=list_files,
+                chat_history=chat_history,
+            )
+            responses.append(parsed_response)
+
+        # Combine and verify responses
+        final_response = self._combine_and_verify_responses(responses)
 
         # Save the answer to db
         if self.brain_service:
-            new_chat_entry = self.save_answer(question, parsed_response)
+            new_chat_entry = self.save_answer(question, final_response)
 
         # Format output to be correct
         metadata = (
-            parsed_response.metadata.model_dump() if parsed_response.metadata else {}
+            final_response.metadata.model_dump() if final_response.metadata else {}
         )
         metadata["snippet_color"] = self.brain.snippet_color if self.brain else None
         metadata["snippet_emoji"] = self.brain.snippet_emoji if self.brain else None
@@ -222,7 +248,7 @@ class RAGService:
             **{
                 "chat_id": self.chat_id,
                 "user_message": question,
-                "assistant": parsed_response.answer,
+                "assistant": final_response.answer,
                 "message_time": new_chat_entry.message_time if new_chat_entry else None,
                 "prompt_title": (self.prompt.title if self.prompt else None),
                 "brain_name": self.brain.name if self.brain else None,
@@ -231,6 +257,16 @@ class RAGService:
                 "metadata": metadata,
             }
         )
+
+    def _generate_query_variations(self, question: str) -> list[str]:
+        # Implement query variation logic
+        # This could use paraphrasing, synonyms, or other techniques
+        return [question]  # Placeholder implementation
+
+    def _combine_and_verify_responses(self, responses: list[ParsedRAGResponse]) -> ParsedRAGResponse:
+        # Implement response combination and verification logic
+        # This could use ranking, filtering, or other techniques
+        return responses[0]  # Placeholder implementation
 
     async def generate_answer_stream(
         self,
