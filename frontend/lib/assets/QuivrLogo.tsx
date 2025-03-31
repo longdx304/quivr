@@ -10,19 +10,19 @@ export const QuivrLogo = ({
   size,
   color = "white",
 }: QuivrLogoProps): JSX.Element => {
-  const [src, setSrc] = useState<string>("/medzavy.webp");
+  const [src, setSrc] = useState<string>("/traphaco.jpg");
 
   useEffect(() => {
     if (color === "primary") {
-      setSrc("/medzavy.webp");
+      setSrc("/traphaco.jpg");
     } else if (color === "accent") {
-      setSrc("/medzavy.webp");
+      setSrc("/traphaco.jpg");
     } else if (color === "black") {
-      setSrc("/medzavy.webp");
+      setSrc("/traphaco.jpg");
     } else {
-      setSrc("/medzavy.webp");
+      setSrc("/traphaco.jpg");
     }
   }, [color]);
 
-  return <Image src={src} alt="Dobbie Logo" width={size} height={size} />;
+  return <Image src={src} alt='Traphaco.AI Logo' width={size} height={size} />;
 };

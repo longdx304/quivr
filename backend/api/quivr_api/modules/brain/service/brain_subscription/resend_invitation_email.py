@@ -44,8 +44,8 @@ def resend_invitation_email(
             {
                 "from": brains_settings.resend_email_address,
                 "to": [brain_subscription.email],
-                "subject": "Medzavy - Mời tham gia Brain",
-                "reply_to": "no-reply@medzavy.app",
+                "subject": "Traphaco - Mời tham gia Brain",
+                "reply_to": "no-reply@traphaco.com",
                 "html": html_body,
             }
         )

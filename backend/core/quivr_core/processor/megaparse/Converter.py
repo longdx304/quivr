@@ -158,7 +158,6 @@ class DOCXConverter(Converter):
             )
             if i == 0:
                 row_content.append("|" + "---|" * len(row.cells))
-
         return row_content
 
     def save_md(self, md_content: str, file_path: Path | str) -> None:
@@ -252,7 +251,7 @@ class PDFConverter:
     def __init__(
         self,
         llama_parse_api_key: str,
-        method: PdfParser | str = PdfParser.UNSTRUCTURED,
+        method: PdfParser | str = PdfParser.LLAMA_PARSE,
         model=ModelEnum.NONE,
         strategy="fast",
     ) -> None:
@@ -266,20 +265,20 @@ class PDFConverter:
         self.method = method
 
     async def _llama_parse(self, api_key: str, file_path: str | Path):
-        logger.debug(f"Parsing {file_path.name} using llama_parse")
-        parsing_instructions = "Do not take into account the page breaks (no --- between pages), do not repeat the header and the footer so the tables are merged. Keep the same format for similar tables."
+        logger.debug(f"Parsing {file_path} using llama_parse")
+        parsing_instructions = ""
         self.parser = LlamaParse(
             api_key=str(api_key),
             result_type=ResultType.MD,
-            gpt4o_mode=True,
             verbose=True,
-            language=Language.FRENCH,
-            parsing_instruction=parsing_instructions,  # Optionally you can define a parsing instruction
+            language=Language.VIETNAMESE,
+            parsing_instruction=parsing_instructions,
+            parseMode="parse_page_with_llm",
         )
         documents: List[LlamaDocument] = await self.parser.aload_data(str(file_path))
         parsed_md = ""
         for document in documents:
-            text_content = document.text
+            text_content = document.text + document.metadata_seperator 
             parsed_md = parsed_md + text_content
         return parsed_md
 
@@ -287,7 +286,7 @@ class PDFConverter:
         self, file_path: str | Path, model: ModelEnum = ModelEnum.NONE
     ):
         logger.debug(
-            f"Parsing {file_path.name} using unstructured with strategy {self.strategy}"
+            f"Parsing {file_path} using unstructured with strategy {self.strategy}"
         )
         unstructured_parser = UnstructuredParser()
         return unstructured_parser.convert(

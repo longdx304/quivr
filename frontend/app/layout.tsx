@@ -10,9 +10,9 @@ import "./globals.css";
 import styles from "./layout.module.scss";
 
 export const metadata = {
-  title: "Dobbie - Get a Second Brain with Generative AI",
+  title: "Traphaco.AI - Get a Second Brain with Generative AI",
   description:
-    "Dobbie is your second brain in the cloud, designed to easily store and retrieve unstructured information.",
+    "Traphaco.AI is your second brain in the cloud, designed to easily store and retrieve unstructured information.",
 };
 
 const RootLayout = async ({
@@ -30,7 +30,7 @@ const RootLayout = async ({
   } = await supabase.auth.getSession();
 
   return (
-    <html lang="en">
+    <html lang='en'>
       <body className={styles.body}>
         <ToastProvider>
           <SupabaseProvider session={session}>
