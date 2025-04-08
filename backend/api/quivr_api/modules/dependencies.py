@@ -141,7 +141,11 @@ def get_embedding_client() -> Embeddings:
             api_version=api_version,
         )
     else:
-        embeddings = OpenAIEmbeddings()  # pyright: ignore reportPrivateUsage=none
+        # embeddings = GoogleGenerativeAIEmbeddings(
+        #     api_key=os.getenv("GOOGLE_API_KEY"),
+        #     model="models/gemini-embedding-exp-03-07",
+        # )
+        embeddings = OpenAIEmbeddings(model="text-embedding-3-large")  # pyright: ignore reportPrivateUsage=none
     return embeddings
 
 

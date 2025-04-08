@@ -114,7 +114,7 @@ class BrainSettings(BaseSettings):
     langfuse_secret_key: str | None = None
     pg_database_url: str
     pg_database_async_url: str
-    embedding_dim: int = 1536
+    embedding_dim: int = 3072
 
 
 class ResendSettings(BaseSettings):
