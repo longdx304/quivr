@@ -192,7 +192,7 @@ class Brain:
         if bserialized.embedding_config.embedder_type == "openai_embedding":
             from langchain_openai import OpenAIEmbeddings
 
-            embedder = OpenAIEmbeddings(**bserialized.embedding_config.config)
+            embedder = OpenAIEmbeddings(model="text-embedding-3-large")
         else:
             raise ValueError("unknown embedder")
 

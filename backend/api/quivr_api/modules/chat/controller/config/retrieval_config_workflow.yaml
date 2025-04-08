@@ -27,12 +27,11 @@ reranker_config:
   supplier: "cohere"
 
   # The model to use for the reranker for the given supplier
-  model: "rerank-multilingual-v3.0"
+  model: "rerank-v3.5"
 
   # Number of chunks returned by the reranker
-  top_n: 20
+  top_n: 10
 llm_config:
-
   max_input_tokens: 2000
 
   # Maximum number of tokens to pass to the LLM

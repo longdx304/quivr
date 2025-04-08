@@ -226,17 +226,24 @@ fsspec==2024.2.0
     # via torch
 ghp-import==2.1.0
     # via mkdocs
+google-ai-generativelanguage==0.6.6
+    # via google-generativeai
 google-api-core==2.19.1
+    # via google-ai-generativelanguage
     # via google-api-python-client
     # via google-cloud-vision
+    # via google-generativeai
 google-api-python-client==2.142.0
+    # via google-generativeai
     # via quivr-api
 google-auth==2.34.0
+    # via google-ai-generativelanguage
     # via google-api-core
     # via google-api-python-client
     # via google-auth-httplib2
     # via google-auth-oauthlib
     # via google-cloud-vision
+    # via google-generativeai
 google-auth-httplib2==0.2.0
     # via google-api-python-client
     # via quivr-api
@@ -244,6 +251,8 @@ google-auth-oauthlib==1.2.1
     # via quivr-api
 google-cloud-vision==3.7.4
     # via unstructured
+google-generativeai==0.7.2
+    # via langchain-google-genai
 googleapis-common-protos==1.63.2
     # via google-api-core
     # via grpcio-status
@@ -257,7 +266,7 @@ griffe==1.2.0
 grpcio==1.65.5
     # via google-api-core
     # via grpcio-status
-grpcio-status==1.65.5
+grpcio-status==1.62.3
     # via google-api-core
 h11==0.14.0
     # via httpcore
@@ -384,6 +393,7 @@ langchain-core==0.2.41
     # via langchain-cohere
     # via langchain-community
     # via langchain-experimental
+    # via langchain-google-genai
     # via langchain-openai
     # via langchain-text-splitters
     # via langgraph
@@ -392,6 +402,8 @@ langchain-core==0.2.41
     # via quivr-core
 langchain-experimental==0.0.64
     # via langchain-cohere
+langchain-google-genai==1.0.10
+    # via quivr-api
 langchain-openai==0.1.25
     # via megaparse
     # via quivr-api
@@ -737,11 +749,14 @@ prompt-toolkit==3.0.47
     # via click-repl
     # via ipython
 proto-plus==1.24.0
+    # via google-ai-generativelanguage
     # via google-api-core
     # via google-cloud-vision
-protobuf==5.27.3
+protobuf==4.25.6
+    # via google-ai-generativelanguage
     # via google-api-core
     # via google-cloud-vision
+    # via google-generativeai
     # via googleapis-common-protos
     # via grpcio-status
     # via onnx
@@ -776,6 +791,7 @@ pydantic==2.8.2
     # via anthropic
     # via cohere
     # via fastapi
+    # via google-generativeai
     # via gotrue
     # via langchain
     # via langchain-core
@@ -1067,6 +1083,7 @@ tornado==6.4.1
     # via ipykernel
     # via jupyter-client
 tqdm==4.66.5
+    # via google-generativeai
     # via huggingface-hub
     # via iopath
     # via llama-index-core
@@ -1086,6 +1103,7 @@ traitlets==5.14.3
     # via nbconvert
     # via nbformat
 transformers==4.44.2
+    # via quivr-api
     # via quivr-core
     # via unstructured-inference
 types-pyyaml==6.0.12.20240808
@@ -1099,6 +1117,7 @@ typing-extensions==4.12.2
     # via cohere
     # via emoji
     # via fastapi
+    # via google-generativeai
     # via huggingface-hub
     # via iopath
     # via ipython
