@@ -55,7 +55,7 @@ class DefaultRerankers(str, Enum):
         """
         # Mapping of suppliers to their default models
         return {
-            self.COHERE: "rerank-multilingual-v3.0",
+            self.COHERE: "rerank-v3.5",
             self.JINA: "jina-reranker-v2-base-multilingual",
         }[self]
 
@@ -360,8 +360,8 @@ class RerankerConfig(QuivrBaseConfig):
     """
 
     supplier: DefaultRerankers | None = None
-    model: str | None = None
-    top_n: int = 20
+    model: str | None = "rerank-v3.5"
+    top_n: int = 10
     api_key: str | None = None
 
     def __init__(self, **data):

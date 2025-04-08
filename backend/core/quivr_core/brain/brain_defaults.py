@@ -35,7 +35,7 @@ def default_embedder() -> Embeddings:
         from langchain_openai import OpenAIEmbeddings
 
         logger.debug("Loaded OpenAIEmbeddings as default LLM for brain")
-        embedder = OpenAIEmbeddings()
+        embedder = OpenAIEmbeddings(model="text-embedding-3-large")
         return embedder
     except ImportError as e:
         raise ImportError(
