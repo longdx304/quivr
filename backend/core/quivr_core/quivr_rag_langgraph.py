@@ -95,6 +95,7 @@ class QuivrQARAGLangGraph:
         if reranker is not None:
             self.reranker = reranker
         elif self.retrieval_config.reranker_config.supplier == DefaultRerankers.COHERE:
+            logger.info(f"Using Cohere Reranker with model {self.retrieval_config.reranker_config.model}")
             self.reranker = CohereRerank(
                 model=self.retrieval_config.reranker_config.model,
                 top_n=self.retrieval_config.reranker_config.top_n,

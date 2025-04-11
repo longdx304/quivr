@@ -100,7 +100,7 @@ DOCXProcessor = _build_processor(
     "DOCXProcessor", Docx2txtLoader, [FileExtension.docx, FileExtension.doc]
 )
 XLSXProcessor = _build_processor(
-    "XLSXProcessor", UnstructuredExcelLoader, [FileExtension.xlsx, FileExtension.xls]
+    "XLSXProcessor", UnstructuredExcelLoader, [FileExtension.xlsx, FileExtension.xls, FileExtension.xlsm]
 )
 PPTProcessor = _build_processor(
     "PPTProcessor", UnstructuredPowerPointLoader, [FileExtension.pptx]

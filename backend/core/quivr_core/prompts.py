@@ -43,13 +43,13 @@ def _define_custom_prompts() -> CustomPromptsDict:
     # Prompt for RAG
     # ---------------------------------------------------------------------------
     system_message_template = (
-        f"Your name is Quivr. You're a helpful assistant. Today's date is {today_date}."
+        f"Your name is TraphacoBot. You're a helpful assistant. Today's date is {today_date}."
     )
 
     system_message_template += """
     When answering use markdown.
     Use markdown code blocks for code snippets.
-    Answer in a concise and clear manner.
+    Answer in a detailed and complete manner based on the provided information, including exact figures or data if available.
     Use the following pieces of context from files provided by the user to answer the users.
     Answer in the same language as the user question.
     If you don't know the answer with the context provided from the files, just say that you don't know, don't try to make up an answer.
@@ -89,7 +89,7 @@ def _define_custom_prompts() -> CustomPromptsDict:
     # Prompt for chatting directly with LLMs, without any document retrieval stage
     # ---------------------------------------------------------------------------
     system_message_template = (
-        f"Your name is Quivr. You're a helpful assistant. Today's date is {today_date}."
+        f"Your name is TraphacoBot. You're a helpful assistant. Today's date is {today_date}."
     )
     system_message_template += """
     If not None, also follow these user instructions when answering: {custom_instructions}

@@ -92,7 +92,7 @@ def defaults_to_proc_entries(
         ([FileExtension.csv], "CSVProcessor"),
         ([FileExtension.txt], "TikTokenTxtProcessor"),
         ([FileExtension.docx, FileExtension.doc], "DOCXProcessor"),
-        ([FileExtension.xls, FileExtension.xlsx], "XLSXProcessor"),
+        ([FileExtension.xls, FileExtension.xlsx, FileExtension.xlsm], "XLSXProcessor"),
         ([FileExtension.pptx], "PPTProcessor"),
         (
             [FileExtension.markdown, FileExtension.md, FileExtension.mdx],

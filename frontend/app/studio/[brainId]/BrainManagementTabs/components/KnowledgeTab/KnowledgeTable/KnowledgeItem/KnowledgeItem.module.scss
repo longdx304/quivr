@@ -60,3 +60,10 @@
     padding-bottom: Spacings.$spacing01;
   }
 }
+
+.error_tooltip {
+  max-width: 300px;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+}

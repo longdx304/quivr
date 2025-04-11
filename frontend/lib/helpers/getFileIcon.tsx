@@ -44,6 +44,7 @@ const fileTypeIcons: Record<SupportedFileExtensions, IconType> = {
   py: BsFiletypePy,
   telegram: BsFiletypeDocx,
   bib: FaFile,
+  xlsm: BsFiletypeXls,
 };
 
 export const getFileIcon = (fileName: string): JSX.Element => {

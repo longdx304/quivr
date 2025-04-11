@@ -32,6 +32,7 @@ class FileExtension(str, Enum):
     pptx = ".pptx"
     xls = ".xls"
     xlsx = ".xlsx"
+    xlsm = ".xlsm"
     md = ".md"
     mdx = ".mdx"
     markdown = ".markdown"
