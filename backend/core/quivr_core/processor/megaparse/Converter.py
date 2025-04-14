@@ -41,31 +41,67 @@ class Converter:
 
 
 class XLSXConverter(Converter):
-    def __init__(self) -> None:
-        pass
+    def __init__(self, llama_parse_api_key: str = "") -> None:
+        # Prioritize passed key, fallback to environment variable
+        self.llama_parse_api_key = llama_parse_api_key or os.environ.get("LLAMA_PARSE_API_KEY")
+        if not self.llama_parse_api_key:
+            logger.warning("LLAMA_PARSE_API_KEY not found in config or environment. XLSX/XLSM parsing via LlamaParse will fail.")
 
     async def convert(self, file_path: str | Path) -> LangChainDocument:
+        if not self.llama_parse_api_key:
+             raise ValueError("LlamaParse API Key is required for XLSX/XLSM parsing but not configured.")
+             
         if isinstance(file_path, str):
             file_path = Path(file_path)
-        xls = pd.ExcelFile(file_path)  # type: ignore
-        sheets = pd.read_excel(xls)
+        
+        logger.info(f"Processing Excel file {file_path} using LlamaParse.")
+        
+        try:
+            parser = LlamaParse(
+                api_key=str(self.llama_parse_api_key),
+                result_type=ResultType.MD,  # Output as Markdown
+                verbose=True,
+                language=Language.ENGLISH, # Or VIETNAMESE if needed, but English might be safer for parsing structure
+                parsing_instruction=(
+                    "Extract all text content and tables. Preserve table structures accurately. "
+                    "Represent tables in Markdown format."
+                ),
+                # Use document mode for potentially better structure handling in Excel
+                parseMode="parse_document_with_llm", 
+            )
+            
+            documents: List[LlamaDocument] = await parser.aload_data(str(file_path))
+            
+            parsed_md = "\n".join([doc.text for doc in documents])
+            logger.info(f"Successfully parsed {file_path} with LlamaParse. Content length: {len(parsed_md)}")
 
-        target_text = self.table_to_text(sheets)
+            return LangChainDocument(
+                page_content=parsed_md,
+                metadata={
+                    "filename": file_path.name,
+                    "type": file_path.suffix.lower().lstrip('.') # Use actual extension type
+                },
+            )
+        except Exception as e:
+            logger.error(f"LlamaParse failed for {file_path}: {e}", exc_info=True)
+            # Return a document indicating failure, allowing the process to potentially continue
+            return LangChainDocument(
+                page_content=f"Error processing Excel file {file_path.name} with LlamaParse: {e}",
+                metadata={
+                    "filename": file_path.name, 
+                    "type": file_path.suffix.lower().lstrip('.'),
+                    "error": str(e)
+                 }
+            )
 
-        return LangChainDocument(
-            page_content=target_text,
-            metadata={"filename": file_path.name, "type": "xlsx"},
-        )
-
-    def convert_tab(self, file_path: str | Path, tab_name: str) -> str:
-        if isinstance(file_path, str):
-            file_path = Path(file_path)
-        xls = pd.ExcelFile(str(file_path))
-        sheets = pd.read_excel(xls, tab_name)
-        target_text = self.table_to_text(sheets)
-        return target_text
+    async def convert_tab(self, file_path: str | Path, tab_name: str) -> str:
+         # LlamaParse processes the whole document, extracting a specific tab isn't supported directly.
+         # Raise an error or return empty/message indicating this limitation.
+         logger.error(f"convert_tab called for {file_path}, but LlamaParse processes the whole document.")
+         raise NotImplementedError("LlamaParse processes the whole document, specific tab extraction is not supported via this converter.")
 
     def table_to_text(self, df):
+        # This method is now unused if LlamaParse is always used, but kept for potential future reference
         text_rows = []
         for _, row in df.iterrows():
             row_text = " | ".join(str(value) for value in row.values if pd.notna(value))
@@ -365,7 +401,7 @@ class MegaParse(BaseLoader):
         self.config = config
 
     async def aload(self, **convert_kwargs) -> LangChainDocument:
-        file_extension: str = os.path.splitext(self.file_path)[1]
+        file_extension: str = os.path.splitext(self.file_path)[1].lower()
         if file_extension == ".docx":
             converter = DOCXConverter()
         elif file_extension == ".pptx":
@@ -376,15 +412,19 @@ class MegaParse(BaseLoader):
                 strategy=self.config.strategy,
                 method=self.config.pdf_parser,
             )
-        elif file_extension == ".xlsx":
-            converter = XLSXConverter()
+        elif file_extension in [".xlsx", ".xls", ".xlsm"]:
+            # Pass the API key here
+            converter = XLSXConverter(llama_parse_api_key=str(self.config.llama_parse_api_key))
         else:
             raise ValueError(f"Unsupported file extension: {file_extension}")
 
         return await converter.convert(self.file_path, **convert_kwargs)
 
     def load(self, **kwargs) -> LangChainDocument:
-        file_extension: str = os.path.splitext(self.file_path)[1]
+        # Note: 'load' is generally discouraged for async operations. 
+        # Consider removing or adapting if not strictly necessary for synchronous workflows.
+        file_extension: str = os.path.splitext(self.file_path)[1].lower()
+        
         if file_extension == ".docx":
             converter = DOCXConverter()
         elif file_extension == ".pptx":
@@ -393,29 +433,65 @@ class MegaParse(BaseLoader):
             converter = PDFConverter(
                 llama_parse_api_key=str(self.config.llama_parse_api_key),
                 strategy=self.config.strategy,
+                # Assuming default method if not specified in simple load
+                method=self.config.pdf_parser, 
             )
-        elif file_extension == ".xlsx":
-            converter = XLSXConverter()
+        elif file_extension in [".xlsx", ".xls", ".xlsm"]:
+             # Pass the API key here
+            converter = XLSXConverter(llama_parse_api_key=str(self.config.llama_parse_api_key))
         else:
-            print(self.file_path, file_extension)
+            logger.error(f"Unsupported file extension in load: {file_extension} for path {self.file_path}")
             raise ValueError(f"Unsupported file extension: {file_extension}")
 
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(converter.convert(self.file_path, **kwargs))
+        # Running async within sync - careful with event loops
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                 # If a loop is running, create a new task (might be complex in some contexts)
+                 # This part might need adjustment based on your async environment
+                 # For simplicity, let's assume a simple run_until_complete is okay for now,
+                 # but this can cause issues if called from within an already async function.
+                 logger.warning("Calling async aload from sync context with running event loop. This might lead to issues.")
+                 # A safer approach might involve `asyncio.run()` if possible, or structuring calls differently.
+                 return asyncio.run(self.aload(**kwargs)) 
+            else:
+                 return loop.run_until_complete(self.aload(**kwargs))
+        except RuntimeError:
+             # No event loop, or issues getting/running it. Fallback or specific handling needed.
+             logger.warning("RuntimeError getting/running event loop in sync load. Trying asyncio.run().")
+             # asyncio.run() creates its own loop
+             return asyncio.run(self.aload(**kwargs))
+
 
     def load_tab(self, tab_name: str, **kwargs) -> LangChainDocument:
-        file_extension: str = os.path.splitext(self.file_path)[1]
-        if file_extension == ".xlsx":
-            converter = XLSXConverter()
+        # This method is likely incompatible with LlamaParse approach for XLSXConverter
+        file_extension: str = os.path.splitext(self.file_path)[1].lower()
+        if file_extension in [".xlsx", ".xls", ".xlsm"]:
+             converter = XLSXConverter(llama_parse_api_key=str(self.config.llama_parse_api_key))
+             logger.warning(f"load_tab called for {self.file_path}, but LlamaParse in XLSXConverter processes the whole document. Attempting anyway.")
+             # Attempting the async call - may fail or behave unexpectedly
+             try:
+                 loop = asyncio.get_event_loop()
+                 # Similar event loop handling concerns as in `load`
+                 if loop.is_running():
+                     logger.warning("Calling async convert_tab from sync context with running event loop.")
+                     # This will likely fail due to NotImplementedError in convert_tab
+                     content = asyncio.run(converter.convert_tab(self.file_path, tab_name=tab_name)) 
+                 else:
+                     content = loop.run_until_complete(converter.convert_tab(self.file_path, tab_name=tab_name))
+                 return LangChainDocument(
+                     page_content=content, # This will likely be empty or raise error
+                     metadata={"filename": self.file_path.name, "type": "xlsx", "tab_name": tab_name},
+                 )
+             except NotImplementedError as nie:
+                  logger.error(f"load_tab failed as expected with LlamaParse: {nie}")
+                  raise nie
+             except RuntimeError:
+                 logger.error("RuntimeError getting/running event loop in load_tab.")
+                 raise
         else:
-            print(self.file_path, file_extension)
+            logger.error(f"Unsupported file extension for load_tab: {file_extension}")
             raise ValueError(f"Unsupported file extension for tabs: {file_extension}")
-
-        result = converter.convert_tab(self.file_path, tab_name=tab_name)
-        return LangChainDocument(
-            page_content=result,
-            metadata={"filename": self.file_path.name, "type": "xlsx"},
-        )
 
     def save_md(self, md_content: str, file_path: Path | str) -> None:
         os.makedirs(os.path.dirname(file_path), exist_ok=True)

@@ -129,7 +129,7 @@ class RAGService:
             chunk_strategy="semantic",  # Enable semantic chunking
             chunk_size=500,
             chunk_overlap=75,
-            rerank_top_k=5,  # Number of chunks to rerank
+            rerank_top_k=20,  # Number of chunks to rerank
             hybrid_search=True,  # Enable hybrid search
             use_semantic_captions=True,  # Enable semantic captions for better context
         )
