@@ -207,7 +207,7 @@ create table "public"."vectors" (
     "content" text,
     "file_sha1" text,
     "metadata" jsonb,
-    "embedding" vector(3072),
+    "embedding" vector(3072)
 );
 
 
@@ -215,7 +215,7 @@ create table "public"."vectors_old" (
     "id" bigint not null default nextval('vectors_id_seq'::regclass),
     "content" text,
     "metadata" jsonb,
-    "embedding" vector(3072),
+    "embedding" vector(3072)
 );
 
 
@@ -1668,7 +1668,7 @@ CREATE TABLE IF NOT EXISTS vectors (
     content TEXT,
     file_sha1 TEXT,
     metadata JSONB,
-    embedding VECTOR(3072),
+    embedding VECTOR(3072)
 );
 
 -- Create function to match vectors
@@ -1718,7 +1718,7 @@ CREATE TABLE IF NOT EXISTS summaries (
     document_id UUID REFERENCES vectors(id),
     content TEXT,
     metadata JSONB,
-    embedding VECTOR(3072),
+    embedding VECTOR(3072)
 );
 
 -- Create function to match summaries
