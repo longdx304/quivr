@@ -16,7 +16,7 @@ create table "public"."documents" (
     "id" bigint not null default nextval('documents_id_seq'::regclass),
     "content" text,
     "metadata" jsonb,
-    "embedding" vector(1536)
+    "embedding" vector(3072),
 );
 
 

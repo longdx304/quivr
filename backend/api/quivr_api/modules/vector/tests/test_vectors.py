@@ -19,7 +19,7 @@ TestData = Tuple[List[Vector], KnowledgeDB, Brain]
 
 @pytest.fixture(scope="module")
 def embedder():
-    return DeterministicFakeEmbedding(size=1536)
+    return DeterministicFakeEmbedding(size=3072)
 
 
 @pytest.fixture(scope="function")
