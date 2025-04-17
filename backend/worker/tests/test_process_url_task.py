@@ -59,7 +59,7 @@ async def session():
 @pytest_asyncio.fixture()
 async def test_data(session: AsyncSession) -> TestData:
     user_1 = (
-        await session.exec(select(User).where(User.email == "admin@quivr.app"))
+        await session.exec(select(User).where(User.email == "admin@medzavy.com"))
     ).one()
     assert user_1.id
     # Brain data

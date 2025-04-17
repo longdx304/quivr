@@ -236,7 +236,7 @@ def search_result():
 @pytest.fixture(scope="function")
 def user_1(sync_session) -> User:
     user_1 = (
-        sync_session.exec(select(User).where(User.email == "admin@quivr.app"))
+        sync_session.exec(select(User).where(User.email == "admin@medzavy.com"))
     ).one()
     return user_1
 
@@ -643,7 +643,7 @@ async def brain_user_setup(
     session,
 ) -> Tuple[Brain, User]:
     user_1 = (
-        await session.exec(select(User).where(User.email == "admin@quivr.app"))
+        await session.exec(select(User).where(User.email == "admin@medzavy.com"))
     ).one()
     # Brain data
     brain_1 = Brain(
@@ -666,7 +666,7 @@ async def sync_user_notion_setup(
 ):
     sync_user_service = SyncUserService()
     user_1 = (
-        await session.exec(select(User).where(User.email == "admin@quivr.app"))
+        await session.exec(select(User).where(User.email == "admin@medzavy.com"))
     ).one()
 
     # Sync User

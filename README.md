@@ -100,7 +100,7 @@ You can find the installation video [here](https://www.youtube.com/watch?v=cXBa6
 
 - **Step 5**: Login to the app
 
-  You can now sign in to the app with `admin@quivr.app` & `admin`. You can access the app at [http://localhost:3000/login](http://localhost:3000/login).
+  You can now sign in to the app with `admin@medzavy.com` & `admin`. You can access the app at [http://localhost:3000/login](http://localhost:3000/login).
 
   You can access Quivr backend API at [http://localhost:5050/docs](http://localhost:5050/docs)
 

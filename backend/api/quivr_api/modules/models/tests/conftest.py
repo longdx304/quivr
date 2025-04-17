@@ -17,7 +17,7 @@ async def test_data(
 ) -> TestData:
     # User data
     user_1 = (
-        await session.exec(select(User).where(User.email == "admin@quivr.app"))
+        await session.exec(select(User).where(User.email == "admin@medzavy.com"))
     ).one()
 
     model_1 = Model(
