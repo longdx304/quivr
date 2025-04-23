@@ -61,13 +61,14 @@ class XLSXConverter(Converter):
                 api_key=str(self.llama_parse_api_key),
                 result_type=ResultType.MD,  # Output as Markdown
                 verbose=True,
-                language=Language.ENGLISH, # Or VIETNAMESE if needed, but English might be safer for parsing structure
+                language=Language.VIETNAMESE, # Or VIETNAMESE if needed, but English might be safer for parsing structure
                 parsing_instruction=(
                     "Extract all text content and tables. Preserve table structures accurately. "
                     "Represent tables in Markdown format."
                 ),
                 # Use document mode for potentially better structure handling in Excel
-                parseMode="parse_document_with_llm", 
+                parseMode="parse_document_with_llm",
+                page_separator="\n"
             )
             
             documents: List[LlamaDocument] = await parser.aload_data(str(file_path))
@@ -310,6 +311,7 @@ class PDFConverter:
             language=Language.VIETNAMESE,
             parsing_instruction=parsing_instructions,
             parseMode="parse_page_with_llm",
+            page_separator="\n"
         )
         documents: List[LlamaDocument] = await self.parser.aload_data(str(file_path))
         parsed_md = ""

@@ -230,9 +230,9 @@ class LLMEndpointConfig(QuivrBaseConfig):
     llm_base_url: str | None = None
     env_variable_name: str = f"{supplier.upper()}_API_KEY"
     llm_api_key: str | None = None
-    max_input_tokens: int = 4000
-    max_output_tokens: int = 4000
-    temperature: float = 0.1
+    max_input_tokens: int = 10000
+    max_output_tokens: int = 10000
+    temperature: float = 0.3
     streaming: bool = True
     prompt: CustomPromptsModel | None = None
 
@@ -361,7 +361,7 @@ class RerankerConfig(QuivrBaseConfig):
 
     supplier: DefaultRerankers | None = None
     model: str | None = "rerank-v3.5"
-    top_n: int = 20
+    top_n: int = 30
     api_key: str | None = None
 
     def __init__(self, **data):
