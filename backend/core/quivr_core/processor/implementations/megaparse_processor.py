@@ -29,7 +29,7 @@ class MegaparseProcessor(ProcessorBase):
  
     """
  
-    supported_extensions = [FileExtension.pdf]
+    supported_extensions = [FileExtension.pdf, FileExtension.xls, FileExtension.xlsm, FileExtension.xlsx]
  
     def __init__(
         self,
