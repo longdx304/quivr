@@ -92,9 +92,9 @@ class UnstructuredParser:
         chain = None
         if model != ModelEnum.NONE:
             llm = (
-                ChatOpenAI(model="gpt-4o", temperature=0.1)
+                ChatOpenAI(model="gpt-4o-mini", temperature=0.3)
                 if model == ModelEnum.GPT4O
-                else ChatOllama(model=model.value, temperature=0.1)
+                else ChatOllama(model=model.value, temperature=0.3)
             )
 
             # Define the prompt

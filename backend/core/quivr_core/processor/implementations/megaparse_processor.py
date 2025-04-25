@@ -1,36 +1,36 @@
 import logging
-
+ 
 import tiktoken
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter, TextSplitter
 from quivr_core.processor.megaparse import MegaParse
 from quivr_core.processor.megaparse.config import MegaparseConfig
-
+ 
 from quivr_core.files.file import QuivrFile
 from quivr_core.processor.processor_base import ProcessorBase
 from quivr_core.processor.registry import FileExtension
 from quivr_core.processor.splitter import SplitterConfig
-
+ 
 logger = logging.getLogger("quivr_core")
-
-
+ 
+ 
 class MegaparseProcessor(ProcessorBase):
     """
     Megaparse processor for PDF files.
-
+ 
     It can be used to parse PDF files and split them into chunks.
-
+ 
     It comes from the megaparse library.
-
+ 
     ## Installation
     ```bash
     pip install megaparse
     ```
-
+ 
     """
-
-    supported_extensions = [FileExtension.pdf]
-
+ 
+    supported_extensions = [FileExtension.pdf, FileExtension.xls, FileExtension.xlsm, FileExtension.xlsx]
+ 
     def __init__(
         self,
         splitter: TextSplitter | None = None,
@@ -41,29 +41,41 @@ class MegaparseProcessor(ProcessorBase):
         self.enc = tiktoken.get_encoding("cl100k_base")
         self.splitter_config = splitter_config
         self.megaparse_config = megaparse_config
-
+ 
         if splitter:
             self.text_splitter = splitter
         else:
+            # Use separators for semantic chunking
             self.text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
                 chunk_size=splitter_config.chunk_size,
                 chunk_overlap=splitter_config.chunk_overlap,
+                separators=["\n\n", "\n", ". ", "? ", "! ", " ", ""],  # Semantic separators
+                keep_separator=True,  # Keep separators to better maintain context
             )
-
+ 
     @property
     def processor_metadata(self):
         return {
             "chunk_overlap": self.splitter_config.chunk_overlap,
         }
-
+ 
     async def process_file_inner(self, file: QuivrFile) -> list[Document]:
         mega_parse = MegaParse(file_path=file.path, config=self.megaparse_config)  # type: ignore
         document: Document = await mega_parse.aload()
-        if len(document.page_content) > self.splitter_config.chunk_size:
+        
+        # Check if the document content needs splitting based on token count
+        # Use token count for comparison as chunk_size is often token-based
+        token_count = len(self.enc.encode(document.page_content))
+        
+        if token_count > self.splitter_config.chunk_size:
             docs = self.text_splitter.split_documents([document])
             for doc in docs:
-                # if "Production Fonts (maximum)" in doc.page_content:
-                #    print('Doc: ', doc.page_content)
-                doc.metadata = {"chunk_size": len(self.enc.encode(doc.page_content))}
+                # Calculate chunk size based on tokens for metadata
+                doc.metadata["chunk_size"] = len(self.enc.encode(doc.page_content))
             return docs
-        return [document]
+        else:
+            # If the document is smaller than chunk_size, return it as a single chunk
+            # Ensure metadata includes chunk_size
+            document.metadata["chunk_size"] = token_count
+            return [document]
+ 

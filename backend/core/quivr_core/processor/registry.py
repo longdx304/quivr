@@ -92,7 +92,7 @@ def defaults_to_proc_entries(
         ([FileExtension.csv], "CSVProcessor"),
         ([FileExtension.txt], "TikTokenTxtProcessor"),
         ([FileExtension.docx, FileExtension.doc], "DOCXProcessor"),
-        ([FileExtension.xls, FileExtension.xlsx], "XLSXProcessor"),
+        ([FileExtension.xls, FileExtension.xlsx, FileExtension.xlsm], "MegaparseProcessor"),
         ([FileExtension.pptx], "PPTProcessor"),
         (
             [FileExtension.markdown, FileExtension.md, FileExtension.mdx],
@@ -107,13 +107,23 @@ def defaults_to_proc_entries(
     ]:
         for ext in supported_extensions:
             ext_str = ext.value if isinstance(ext, FileExtension) else ext
-            _append_proc_mapping(
-                mapping=base_processors,
-                file_ext=ext,
-                cls_mod=f"quivr_core.processor.implementations.default.{processor_name}",
-                errtxt=f"can't import {processor_name}. Please install quivr-core[{ext_str}] to access {processor_name}",
-                priority=None,
-            )
+            if ext_str == FileExtension.xls.value or ext_str == FileExtension.xlsx.value or ext_str == FileExtension.xlsm.value:
+                logger.info(f"Registering MegaparseProcessor EXcel for {ext_str}")
+                _append_proc_mapping(
+                    mapping=base_processors,
+                    file_ext=ext,
+                    cls_mod=f"quivr_core.processor.implementations.megaparse_processor.MegaparseProcessor",
+                    errtxt=f"can't import MegaparseProcessor. Please install quivr-core[{ext_str}] to access MegaparseProcessor",
+                    priority=None,
+                )
+            else:
+                _append_proc_mapping(
+                    mapping=base_processors,
+                    file_ext=ext,
+                    cls_mod=f"quivr_core.processor.implementations.default.{processor_name}",
+                    errtxt=f"can't import {processor_name}. Please install quivr-core[{ext_str}] to access {processor_name}",
+                    priority=None,
+                )
 
     # TODO(@aminediro): Megaparse should register itself
     # Append Megaparse

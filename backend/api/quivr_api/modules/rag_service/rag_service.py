@@ -126,12 +126,6 @@ class RAGService:
                 max_output_tokens=model.max_output,
             ),
             prompt=self.prompt.content if self.prompt else None,
-            chunk_strategy="semantic",  # Enable semantic chunking
-            chunk_size=400,
-            chunk_overlap=100,
-            rerank_top_k=5,  # Number of chunks to rerank
-            hybrid_search=True,  # Enable hybrid search
-            use_semantic_captions=True,  # Enable semantic captions for better context
         )
         return retrieval_config
 

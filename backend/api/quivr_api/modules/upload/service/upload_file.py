@@ -41,6 +41,9 @@ async def upload_file_storage(
 ):
     supabase_client = await get_supabase_async_client()
     mime_type, _ = mimetypes.guess_type(storage_path)
+    if storage_path.lower().endswith('.xlsm'):
+        mime_type = 'application/vnd.ms-excel.sheet.macroEnabled.12'
+        
     logger.debug(
         f"Uploading file to {storage_path} using supabase. upsert={upsert}, mimetype={mime_type}"
     )

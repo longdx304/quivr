@@ -94,7 +94,7 @@ class LLMModelConfig:
     _model_defaults: Dict[DefaultModelSuppliers, Dict[str, LLMConfig]] = {
         DefaultModelSuppliers.OPENAI: {
             "gpt-4o": LLMConfig(context=128000, tokenizer_hub="Xenova/gpt-4o"),
-            "gpt-4o-mini": LLMConfig(context=128000, tokenizer_hub="Xenova/gpt-4o"),
+            "gpt-4o-mini": LLMConfig(context=128000, tokenizer_hub="Xenova/gpt-4o-mini"),
             "gpt-4-turbo": LLMConfig(context=128000, tokenizer_hub="Xenova/gpt-4"),
             "gpt-4": LLMConfig(context=8192, tokenizer_hub="Xenova/gpt-4"),
             "gpt-3.5-turbo": LLMConfig(
@@ -224,15 +224,15 @@ class LLMEndpointConfig(QuivrBaseConfig):
     """
 
     supplier: DefaultModelSuppliers = DefaultModelSuppliers.OPENAI
-    model: str = "gpt-3.5-turbo-0125"
+    model: str = "gpt-4o-mini"
     context_length: int | None = None
     tokenizer_hub: str | None = None
     llm_base_url: str | None = None
     env_variable_name: str = f"{supplier.upper()}_API_KEY"
     llm_api_key: str | None = None
-    max_input_tokens: int = 2000
-    max_output_tokens: int = 2000
-    temperature: float = 0.7
+    max_input_tokens: int = 10000
+    max_output_tokens: int = 10000
+    temperature: float = 0.3
     streaming: bool = True
     prompt: CustomPromptsModel | None = None
 
@@ -361,7 +361,7 @@ class RerankerConfig(QuivrBaseConfig):
 
     supplier: DefaultRerankers | None = None
     model: str | None = "rerank-v3.5"
-    top_n: int = 10
+    top_n: int = 30
     api_key: str | None = None
 
     def __init__(self, **data):
