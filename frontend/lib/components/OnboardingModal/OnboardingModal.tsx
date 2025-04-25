@@ -61,8 +61,8 @@ export const OnboardingModal = (): JSX.Element => {
   return (
     <FormProvider {...methods}>
       <Modal
-        title='Welcome to Traphaco.AI!'
-        desc='Let us know a bit more about you to get started.'
+        title="Welcome to Dobbie!"
+        desc="Let us know a bit more about you to get started."
         isOpen={isOnboardingModalOpened}
         setOpen={setIsOnboardingModalOpened}
         CloseTrigger={<div />}
@@ -71,12 +71,12 @@ export const OnboardingModal = (): JSX.Element => {
         <div className={styles.modal_content_wrapper}>
           <div className={styles.form_wrapper}>
             <div>
-              <FieldHeader iconName='user' label='Username' mandatory={true} />
+              <FieldHeader iconName="user" label="Username" mandatory={true} />
               <Controller
-                name='username'
+                name="username"
                 render={({ field }) => (
                   <TextInput
-                    label='Choose a username'
+                    label="Choose a username"
                     inputValue={field.value as string}
                     setInputValue={field.onChange}
                   />
@@ -84,12 +84,12 @@ export const OnboardingModal = (): JSX.Element => {
               />
             </div>
             <div>
-              <FieldHeader iconName='office' label='Company' />
+              <FieldHeader iconName="office" label="Company" />
               <Controller
-                name='companyName'
+                name="companyName"
                 render={({ field }) => (
                   <TextInput
-                    label='Your company name'
+                    label="Your company name"
                     inputValue={field.value as string}
                     setInputValue={field.onChange}
                   />
@@ -97,14 +97,14 @@ export const OnboardingModal = (): JSX.Element => {
               />
             </div>
             <div>
-              <FieldHeader iconName='goal' label='Usage Purpose' />
+              <FieldHeader iconName="goal" label="Usage Purpose" />
               <Controller
-                name='usagePurpose'
+                name="usagePurpose"
                 render={({ field }) => (
                   <SingleSelector
-                    iconName='goal'
+                    iconName="goal"
                     options={usagePurposeOptions}
-                    placeholder='In what context will you be using Traphaco.AI'
+                    placeholder="In what context will you be using Dobbie"
                     selectedOption={
                       field.value
                         ? {
@@ -119,14 +119,14 @@ export const OnboardingModal = (): JSX.Element => {
               />
             </div>
             <div>
-              <FieldHeader iconName='hashtag' label='Size of your company' />
+              <FieldHeader iconName="hashtag" label="Size of your company" />
               <Controller
-                name='companySize'
+                name="companySize"
                 render={({ field }) => (
                   <SingleSelector
-                    iconName='hashtag'
+                    iconName="hashtag"
                     options={companySizeOptions}
-                    placeholder='Number of employees in your company'
+                    placeholder="Number of employees in your company"
                     selectedOption={
                       field.value
                         ? {
@@ -143,9 +143,9 @@ export const OnboardingModal = (): JSX.Element => {
           </div>
           <div className={styles.button_wrapper}>
             <QuivrButton
-              iconName='chevronRight'
-              label='Submit'
-              color='primary'
+              iconName="chevronRight"
+              label="Submit"
+              color="primary"
               onClick={() => submitForm()}
               disabled={!username}
             />

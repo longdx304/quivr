@@ -31,16 +31,16 @@
     "answer": {
       "how_to_use_quivr": "Xem tài liệu https://brain.quivr.app/docs/intro.html",
       "what_is_brain": "Một brain là một thư mục ảo để tổ chức thông tin về một chủ đề cụ thể. Nó có thể lưu trữ tài liệu và kết nối với các ứng dụng hoặc API bên ngoài. Ví dụ, một brain 'Khoa học Y tế' có thể chứa dữ liệu liên quan đến sức khỏe, và một brain 'Pháp lý' có thể có thông tin pháp lý. Các brain có thể được công khai để người khác sử dụng mà không tiết lộ nội dung, thúc đẩy chia sẻ kiến thức.",
-      "what_is_quivr": "Traphaco.AI là một trợ lý hữu ích. Bạn có thể dễ dàng kéo và thả tệp vào trò chuyện hoặc phần kiến thức để tương tác với chúng. Nó không chỉ là một công cụ trò chuyện; bạn còn có thể giao tiếp với các ứng dụng bằng API.\nĐể giữ cho công việc của bạn được tổ chức, bạn có thể tạo các brain, về cơ bản là các thư mục ảo, và đăng ký các brain của người khác trong phần khám phá để cộng tác và chia sẻ thông tin một cách liền mạch."
+      "what_is_quivr": "Dobbie là một trợ lý hữu ích. Bạn có thể dễ dàng kéo và thả tệp vào trò chuyện hoặc phần kiến thức để tương tác với chúng. Nó không chỉ là một công cụ trò chuyện; bạn còn có thể giao tiếp với các ứng dụng bằng API.\nĐể giữ cho công việc của bạn được tổ chức, bạn có thể tạo các brain, về cơ bản là các thư mục ảo, và đăng ký các brain của người khác trong phần khám phá để cộng tác và chia sẻ thông tin một cách liền mạch."
     },
-    "how_to_use_quivr": "Cách sử dụng Traphaco.AI?",
+    "how_to_use_quivr": "Cách sử dụng Dobbie?",
     "step_1_1": "1. Kéo và thả tệp vào trò chuyện hoặc vào 📎.",
-    "step_1_2": "Không có tệp? Tải xuống 'Tài liệu Traphaco.AI'",
+    "step_1_2": "Không có tệp? Tải xuống 'Tài liệu Dobbie'",
     "step_2": "2. Bắt đầu trò chuyện với tệp của bạn",
     "step_3": "3. Thưởng thức!",
-    "title": "Xin chào 👋🏻 Bạn muốn khám phá Traphaco.AI không? 😇",
+    "title": "Xin chào 👋🏻 Bạn muốn khám phá Dobbie không? 😇",
     "what_is_brain": "Brain là gì?",
-    "what_is_quivr": "Traphaco.AI là gì?"
+    "what_is_quivr": "Dobbie là gì?"
   },
   "parameters": "Tham số",
   "receivedResponse": "Đã nhận được phản hồi. Bắt đầu xử lý chuỗi hội thoại...",

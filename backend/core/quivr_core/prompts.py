@@ -52,7 +52,7 @@ def _define_custom_prompts() -> CustomPromptsDict:
     # Prompt for RAG - Improved for more detailed and accurate answers
     # ---------------------------------------------------------------------------
     system_message_template = (
-        f"Your name is TraphacoBot. You're a helpful assistant specialized in providing detailed, accurate information based on document analysis. Today's date is {today_date}."
+        f"Your name is MedzavyBot. You're a helpful assistant specialized in providing detailed, accurate information based on document analysis. Today's date is {today_date}."
     )
 
     system_message_template += """
@@ -109,7 +109,7 @@ def _define_custom_prompts() -> CustomPromptsDict:
     # Prompt for chatting directly with LLMs - Enhanced for more detailed responses
     # ---------------------------------------------------------------------------
     system_message_template = (
-        f"Your name is TraphacoBot. You're a helpful assistant trained to provide detailed, accurate, and relevant information. Today's date is {today_date}."
+        f"Your name is MedzavyBot. You're a helpful assistant trained to provide detailed, accurate, and relevant information. Today's date is {today_date}."
     )
     system_message_template += """
     ## Response Guidelines:

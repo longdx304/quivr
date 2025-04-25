@@ -74,9 +74,9 @@ export const HelpWindow = (): JSX.Element => {
           {t("help_window.title", { ns: "contact" })}
         </span>
         <Icon
-          name='close'
-          size='normal'
-          color='black'
+          name="close"
+          size="normal"
+          color="black"
           handleHover={true}
           onClick={() => closeHelpWindow()}
         />
@@ -99,8 +99,8 @@ export const HelpWindow = (): JSX.Element => {
                 <span className={styles.connection}>
                   <strong>Google Drive</strong>{" "}
                   <Image
-                    src='https://quivr-cms.s3.eu-west-3.amazonaws.com/gdrive_8316d080fd.png'
-                    alt='Google Drive'
+                    src="https://quivr-cms.s3.eu-west-3.amazonaws.com/gdrive_8316d080fd.png"
+                    alt="Google Drive"
                     width={16}
                     height={16}
                   />
@@ -109,8 +109,8 @@ export const HelpWindow = (): JSX.Element => {
                 <span className={styles.connection}>
                   <strong>SharePoint</strong>{" "}
                   <Image
-                    src='https://quivr-cms.s3.eu-west-3.amazonaws.com/sharepoint_8c41cfdb09.png'
-                    alt='SharePoint'
+                    src="https://quivr-cms.s3.eu-west-3.amazonaws.com/sharepoint_8c41cfdb09.png"
+                    alt="SharePoint"
                     width={16}
                     height={16}
                   />
@@ -119,8 +119,8 @@ export const HelpWindow = (): JSX.Element => {
                 <span className={styles.connection}>
                   <strong className={styles.pre}>Dropbox</strong>{" "}
                   <Image
-                    src='https://quivr-cms.s3.eu-west-3.amazonaws.com/dropbox_dce4f3d753.png'
-                    alt='Dropbox'
+                    src="https://quivr-cms.s3.eu-west-3.amazonaws.com/dropbox_dce4f3d753.png"
+                    alt="Dropbox"
                     width={16}
                     height={16}
                   />
@@ -164,7 +164,7 @@ export const HelpWindow = (): JSX.Element => {
             <p>
               {t("help_window.you_can_also", { ns: "contact" })}
               <strong>{t("help_window.share", { ns: "contact" })}</strong>{" "}
-              {t("help_window.your_brains_with_other_Traphaco.AI", {
+              {t("help_window.your_brains_with_other_Dobbie", {
                 ns: "contact",
               })}
             </p>
@@ -176,7 +176,7 @@ export const HelpWindow = (): JSX.Element => {
           </span>
           <span className={styles.section_content}>
             <p>
-              {t("help_window.Traphaco.AI_allows_you_to", { ns: "contact" })}
+              {t("help_window.Dobbie_allows_you_to", { ns: "contact" })}
               <strong>
                 {t("help_window.interact_directly", { ns: "contact" })}
               </strong>{" "}
@@ -208,7 +208,7 @@ export const HelpWindow = (): JSX.Element => {
               src="https://quivr-cms.s3.eu-west-3.amazonaws.com/Screen_82ac3783aa.png"
               width={500}
               height={100}
-              alt="Traphaco.AI"
+              alt="Dobbie"
             />
           </div> */}
         </div>

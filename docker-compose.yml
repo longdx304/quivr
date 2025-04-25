@@ -1,26 +1,26 @@
 version: "3.8"
 
 services:
-  # frontend:
-  #   # image: quivr-frontend-prebuilt
-  #   pull_policy: never
-  #   build:
-  #     context: frontend
-  #     dockerfile: Dockerfile
-  #     args:
-  #       - NEXT_PUBLIC_ENV=local
-  #       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
-  #       - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
-  #       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-  #       - NEXT_PUBLIC_CMS_URL=${NEXT_PUBLIC_CMS_URL}
-  #       - NEXT_PUBLIC_FRONTEND_URL=${NEXT_PUBLIC_FRONTEND_URL}
-  #       - NEXT_PUBLIC_AUTH_MODES=${NEXT_PUBLIC_AUTH_MODES}
-  #   container_name: web
-  #   depends_on:
-  #     - backend-api
-  #   restart: always
-  #   ports:
-  #     - 3000:3000
+  frontend:
+    image: frontend:latest
+    pull_policy: never
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_ENV=local
+        - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        - NEXT_PUBLIC_CMS_URL=${NEXT_PUBLIC_CMS_URL}
+        - NEXT_PUBLIC_FRONTEND_URL=${NEXT_PUBLIC_FRONTEND_URL}
+        - NEXT_PUBLIC_AUTH_MODES=${NEXT_PUBLIC_AUTH_MODES}
+    container_name: web
+    depends_on:
+      - backend-api
+    restart: always
+    ports:
+      - 3000:3000
 
   backend-api:
     image: backend-api:latest

@@ -33,13 +33,13 @@ const Main = (): JSX.Element => {
   return (
     <div className={styles.login_page_wrapper}>
       <section className={styles.section}>
-        <Link href='/' className={styles.logo_link}>
+        <Link href="/" className={styles.logo_link}>
           <QuivrLogo size={80} color={isDarkMode ? "white" : "black"} />
         </Link>
         <p className={styles.title}>
           {t("talk_to", { ns: "login" })}{" "}
           <span className={styles.primary_text}>
-            {projectName ? projectName : "Traphaco.AI"}
+            {projectName ? projectName : "Dobbie"}
           </span>
         </p>
         <div className={styles.form_container}>
@@ -57,7 +57,7 @@ const Main = (): JSX.Element => {
 
 const Login = (): JSX.Element => {
   return (
-    <Suspense fallback='Loading...'>
+    <Suspense fallback="Loading...">
       <Main />
     </Suspense>
   );
