@@ -95,6 +95,7 @@ class LLMModelConfig:
         DefaultModelSuppliers.OPENAI: {
             "gpt-4o": LLMConfig(context=128000, tokenizer_hub="Xenova/gpt-4o"),
             "gpt-4o-mini": LLMConfig(context=128000, tokenizer_hub="Xenova/gpt-4o-mini"),
+            "gpt-4.1-mini": LLMConfig(context=128000, tokenizer_hub="Xenova/gpt-4.1-mini"),
             "gpt-4-turbo": LLMConfig(context=128000, tokenizer_hub="Xenova/gpt-4"),
             "gpt-4": LLMConfig(context=8192, tokenizer_hub="Xenova/gpt-4"),
             "gpt-3.5-turbo": LLMConfig(
@@ -111,7 +112,7 @@ class LLMModelConfig:
             ),
         },
         DefaultModelSuppliers.ANTHROPIC: {
-            "claude-3-5-sonnet": LLMConfig(
+            "claude-3-5-sonnet-20241022": LLMConfig(
                 context=200000, tokenizer_hub="Xenova/claude-tokenizer"
             ),
             "claude-3-opus": LLMConfig(

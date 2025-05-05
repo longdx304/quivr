@@ -9,8 +9,6 @@ export const defineMaxTokens = (
       return 2000;
     case "gpt-3.5-turbo-0125":
       return 2000;
-    case "gpt-3.5-turbo-16k":
-      return 4000;
     case "gpt-4":
       return 4000;
     case "gpt-4-0125-preview":
@@ -24,6 +22,10 @@ export const defineMaxTokens = (
     case "gpt-4o":
       return 4000;
     case "gpt-4o-mini":
+      return 4000;
+    case "claude-3-5-sonnet-20241022":
+      return 4000;
+    case "gpt-4.1-mini":
       return 4000;
     default:
       return 2000;
