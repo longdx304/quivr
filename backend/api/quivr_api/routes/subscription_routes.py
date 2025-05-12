@@ -101,6 +101,7 @@ def invite_users_to_brain(
         Depends(AuthBearer()),
         Depends(has_brain_authorization([RoleEnum.Owner, RoleEnum.Editor])),
     ],
+    tags=["Brain"]
 )
 def get_users_with_brain_access(
     brain_id: UUID,
@@ -129,6 +130,7 @@ def get_users_with_brain_access(
 
 @subscription_router.delete(
     "/brains/{brain_id}/subscription",
+    tags=["BrainSubscription"],
 )
 async def remove_user_subscription(
     brain_id: UUID, current_user: UserIdentity = Depends(get_current_user)
@@ -223,7 +225,7 @@ def get_user_invitation(
 
 @subscription_router.post(
     "/brains/{brain_id}/subscription/accept",
-    tags=["Brain"],
+    tags=["BrainSubscription"],
 )
 async def accept_invitation(
     brain_id: UUID, current_user: UserIdentity = Depends(get_current_user)
@@ -269,7 +271,7 @@ async def accept_invitation(
 
 @subscription_router.post(
     "/brains/{brain_id}/subscription/decline",
-    tags=["Brain"],
+    tags=["BrainSubscription"],
 )
 async def decline_invitation(
     brain_id: UUID, current_user: UserIdentity = Depends(get_current_user)
@@ -310,6 +312,7 @@ class BrainSubscriptionUpdatableProperties(BaseModel):
         Depends(AuthBearer()),
         Depends(has_brain_authorization([RoleEnum.Owner, RoleEnum.Editor])),
     ],
+    tags=["BrainSubscription"],
 )
 def update_brain_subscription(
     brain_id: UUID,
@@ -385,7 +388,7 @@ def update_brain_subscription(
 
 @subscription_router.post(
     "/brains/{brain_id}/subscribe",
-    tags=["Subscription"],
+    tags=["BrainSubscription"],
 )
 async def subscribe_to_brain_handler(
     brain_id: UUID,
@@ -430,7 +433,7 @@ async def subscribe_to_brain_handler(
 
 @subscription_router.post(
     "/brains/{brain_id}/unsubscribe",
-    tags=["Subscription"],
+    tags=["BrainSubscription"],
 )
 async def unsubscribe_from_brain_handler(
     brain_id: UUID, current_user: UserIdentity = Depends(get_current_user)

@@ -22,6 +22,7 @@ export const Settings = ({
   remainingCredits,
 }: InfoDisplayerProps): JSX.Element => {
   const { t } = useTranslation(["translation"]);
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   return (
     <div className={styles.settings_wrapper}>
@@ -29,28 +30,28 @@ export const Settings = ({
         {t("general_settings_and_information", { ns: "translation" })}
       </span>
       <div className={styles.infos_wrapper}>
-        <InfoSection iconName='email' title='Email'>
+        <InfoSection iconName="email" title="Email">
           <span className={styles.bold}>{email}</span>
         </InfoSection>
-        <InfoSection iconName='user' title='Username'>
+        <InfoSection iconName="user" title="Username">
           <span className={styles.bold}>{username}</span>
         </InfoSection>
         {!!showTokensSettings && (
-          <InfoSection iconName='coin' title='Remaining credits'>
+          <InfoSection iconName="coin" title="Remaining credits">
             <div className={styles.remaining_credits}>
               <span className={styles.credits}>{remainingCredits}</span>
-              <Icon name='coin' color='gold' size='normal' />
+              <Icon name="coin" color="gold" size="normal" />
             </div>
           </InfoSection>
         )}
-        <InfoSection iconName='key' title='Traphaco.AI API Key'>
+        <InfoSection iconName="key" title="Traphaco.AI API Key">
           <div className={styles.text_and_button}>
             <span className={styles.text}>
               {t("api_key_is_unique_identifier", { ns: "translation" })}
               <a
-                href='https://api.quivr.app/docs'
-                target='_blank'
-                rel='noopener noreferrer'
+                href={`${BACKEND_URL}/docs`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className={styles.link}
               >
                 Traphaco.AI&apos;s API.
@@ -62,7 +63,7 @@ export const Settings = ({
           </div>
         </InfoSection>
         {!!showTokensSettings && (
-          <InfoSection iconName='star' title='My plan' last={true}>
+          <InfoSection iconName="star" title="My plan" last={true}>
             <div className={styles.text_and_button}>
               <span className={styles.text}>
                 Customize your subscription to best suit your needs. By

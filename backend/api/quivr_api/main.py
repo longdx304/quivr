@@ -14,15 +14,12 @@ from quivr_api.middlewares.cors import add_cors_middleware
 from quivr_api.middlewares.logging_middleware import LoggingMiddleware
 from quivr_api.modules.analytics.controller.analytics_routes import analytics_router
 from quivr_api.modules.api_key.controller import api_key_router
-from quivr_api.modules.assistant.controller import assistant_router
 from quivr_api.modules.brain.controller import brain_router
 from quivr_api.modules.chat.controller import chat_router
 from quivr_api.modules.knowledge.controller import knowledge_router
 from quivr_api.modules.misc.controller import misc_router
 from quivr_api.modules.models.controller.model_routes import model_router
-from quivr_api.modules.onboarding.controller import onboarding_router
 from quivr_api.modules.prompt.controller import prompt_router
-from quivr_api.modules.sync.controller import sync_router
 from quivr_api.modules.upload.controller import upload_router
 from quivr_api.modules.user.controller import user_router
 from quivr_api.routes.crawl_routes import crawl_router
@@ -70,9 +67,9 @@ app.add_middleware(LoggingMiddleware)
 app.include_router(brain_router)
 app.include_router(chat_router)
 app.include_router(crawl_router)
-app.include_router(assistant_router)
-app.include_router(sync_router)
-app.include_router(onboarding_router)
+# app.include_router(assistant_router)
+# app.include_router(sync_router)
+# app.include_router(onboarding_router)
 app.include_router(misc_router)
 app.include_router(analytics_router)
 app.include_router(upload_router)

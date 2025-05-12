@@ -50,6 +50,7 @@ ModelServiceDep = Annotated[ModelService, Depends(get_service(ModelService))]
 @brain_router.get(
     "/brains/integrations/",
     dependencies=[Depends(AuthBearer())],
+    tags=["Brain"]
 )
 async def get_integration_brain_description() -> list[IntegrationDescriptionEntity]:
     """Retrieve the integration brain description."""
