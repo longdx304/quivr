@@ -46,10 +46,12 @@ export const CreateUserModal = ({
   const [error, setError] = useState<string | null>(null);
   const { createUser, updateUser } = useUserApi();
 
-  const brainOptions: SelectOptionProps<string>[] = allBrains.map((brain) => ({
-    label: brain.name,
-    value: brain.id,
-  }));
+  const brainOptions: SelectOptionProps<string>[] = allBrains
+    .filter((brain) => brain.brain_type === "doc")
+    .map((brain) => ({
+      label: brain.name,
+      value: brain.id,
+    }));
 
   const [selectedBrains, setSelectedBrains] = useState<
     SelectOptionProps<string>[]
@@ -131,16 +133,16 @@ export const CreateUserModal = ({
 
       // Close the modal
       setOpen(false);
-      
+
       // Reset form
       reset();
       setSelectedBrains([]);
-      
+
       // Call onSuccess callback if provided to refresh the user list
       if (onSuccess) {
         onSuccess();
       }
-      
+
       // eslint-disable-next-line @typescript-eslint/no-shadow
     } catch (error) {
       console.error(
@@ -181,27 +183,29 @@ export const CreateUserModal = ({
   return (
     <FormProvider {...methods}>
       <Modal
-        title={isEditMode ? t("edit_user", { ns: "user" }) : t("create_user", { ns: "user" })}
+        title={
+          isEditMode
+            ? t("edit_user", { ns: "user" })
+            : t("create_user", { ns: "user" })
+        }
         isOpen={isOpen}
         setOpen={setOpen}
-        size='normal'
+        size="normal"
         CloseTrigger={
           <div className={styles.actions}>
-            <Button
-              type='button'
-              variant='secondary'
-              onClick={handleCancel}
-            >
+            <Button type="button" variant="secondary" onClick={handleCancel}>
               {t("cancel", { ns: "user" })}
             </Button>
             <Button
-              type='submit'
-              variant='primary'
+              type="submit"
+              variant="primary"
               isLoading={isSubmitting}
               // eslint-disable-next-line @typescript-eslint/no-misused-promises
               onClick={handleSubmit(onSubmit)}
             >
-              {isEditMode ? t("save_changes", { ns: "user" }) : t("create", { ns: "user" })}
+              {isEditMode
+                ? t("save_changes", { ns: "user" })
+                : t("create", { ns: "user" })}
             </Button>
           </div>
         }
@@ -210,7 +214,9 @@ export const CreateUserModal = ({
           {error && <div className={styles.error_message}>{error}</div>}
           <div className={styles.form_fields}>
             <div className={styles.form_field}>
-              <label htmlFor='firstName'>{t("first_name", { ns: "user" })}</label>
+              <label htmlFor="firstName">
+                {t("first_name", { ns: "user" })}
+              </label>
               <TextInput
                 label={t("first_name", { ns: "user" })}
                 inputValue={firstName}
@@ -225,7 +231,7 @@ export const CreateUserModal = ({
             </div>
 
             <div className={styles.form_field}>
-              <label htmlFor='lastName'>{t("last_name", { ns: "user" })}</label>
+              <label htmlFor="lastName">{t("last_name", { ns: "user" })}</label>
               <TextInput
                 label={t("last_name", { ns: "user" })}
                 inputValue={lastName}
@@ -240,7 +246,7 @@ export const CreateUserModal = ({
             </div>
 
             <div className={styles.form_field}>
-              <label htmlFor='email'>{t("email", { ns: "user" })}</label>
+              <label htmlFor="email">{t("email", { ns: "user" })}</label>
               <TextInput
                 label={t("email", { ns: "user" })}
                 inputValue={email}
@@ -260,13 +266,13 @@ export const CreateUserModal = ({
             </div>
 
             <div className={styles.form_field}>
-              <label htmlFor='brains'>{t("brains", { ns: "user" })}</label>
+              <label htmlFor="brains">{t("brains", { ns: "user" })}</label>
               <MultiSelect
                 options={brainOptions}
                 selectedOptions={selectedBrains}
                 onChange={handleBrainsChange}
                 placeholder={t("select_brains", { ns: "user" })}
-                iconName='brain'
+                iconName="brain"
               />
             </div>
           </div>
