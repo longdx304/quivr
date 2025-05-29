@@ -115,17 +115,35 @@ class RAGService:
             raise ValueError(f"Cannot get model {self.model_to_use}")
         api_key = os.getenv(model.env_variable_name, "not-defined")
 
-        # Enhanced retrieval configuration with hybrid search and reranking
+        # Enhanced retrieval configuration for better quality responses
         retrieval_config = RetrievalConfig(
             llm_config=LLMEndpointConfig(
                 model=self.model_to_use,
                 llm_base_url=model.endpoint_url,
                 llm_api_key=api_key,
-                temperature=(LLMEndpointConfig.model_fields["temperature"].default),
+                temperature=0.1,  # Lower temperature for more consistent responses
                 max_input_tokens=model.max_input,
                 max_output_tokens=model.max_output,
             ),
             prompt=self.prompt.content if self.prompt else None,
+            # Enhanced chunking parameters
+            chunk_size=600,  # Increased from 400 for better context
+            chunk_overlap=150,  # Increased overlap for better continuity
+            # Enhanced retrieval parameters
+            max_history=8,  # Reduced from 10 to focus on recent relevant context
+            max_files=25,  # Increased from 20 for more comprehensive search
+            # Enhanced reranking configuration
+            reranker_config={
+                "supplier": "cohere",
+                "model": "rerank-v3.5",
+                "top_n": 8,  # Increased from 5 for more comprehensive reranking
+                "api_key": os.getenv("COHERE_API_KEY", "not-defined"),
+            },
+            # Quality enhancement flags
+            hybrid_search=True,
+            use_semantic_captions=True,
+            enable_query_expansion=True,
+            context_quality_threshold=0.7,  # Minimum relevance score for chunks
         )
         return retrieval_config
 
