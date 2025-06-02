@@ -22,6 +22,9 @@ from quivr_api.modules.models.controller.model_routes import model_router
 from quivr_api.modules.prompt.controller import prompt_router
 from quivr_api.modules.upload.controller import upload_router
 from quivr_api.modules.user.controller import user_router
+from quivr_api.modules.onboarding.controller import onboarding_router
+from quivr_api.modules.sync.controller import sync_router
+from quivr_api.modules.assistant.controller import assistant_router
 from quivr_api.routes.crawl_routes import crawl_router
 from quivr_api.routes.subscription_routes import subscription_router
 from quivr_api.utils.telemetry import maybe_send_telemetry
@@ -67,9 +70,9 @@ app.add_middleware(LoggingMiddleware)
 app.include_router(brain_router)
 app.include_router(chat_router)
 app.include_router(crawl_router)
-# app.include_router(assistant_router)
-# app.include_router(sync_router)
-# app.include_router(onboarding_router)
+app.include_router(assistant_router)
+app.include_router(sync_router)
+app.include_router(onboarding_router)
 app.include_router(misc_router)
 app.include_router(analytics_router)
 app.include_router(upload_router)
