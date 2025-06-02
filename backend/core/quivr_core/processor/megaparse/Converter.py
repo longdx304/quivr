@@ -68,6 +68,7 @@ class XLSXConverter(Converter):
                 ),
                 # Use document mode for potentially better structure handling in Excel
                 parseMode="parse_document_with_llm",
+                # premium_mode=True,
                 page_separator="\n"
             )
             
@@ -310,7 +311,7 @@ class PDFConverter:
             verbose=True,
             language=Language.VIETNAMESE,
             parsing_instruction=parsing_instructions,
-            parseMode="parse_page_with_llm",
+            premium_mode=True,
             page_separator="\n"
         )
         documents: List[LlamaDocument] = await self.parser.aload_data(str(file_path))
