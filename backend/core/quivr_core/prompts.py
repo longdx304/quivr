@@ -31,19 +31,25 @@ def _define_custom_prompts() -> CustomPromptsDict:
     # ---------------------------------------------------------------------------
     _template = """Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question, in its original language.
 
-    Important instructions:
-    1. Maintain all specific details, entity names, numerical values, and technical terms from the follow-up question
-    2. Incorporate relevant context from the chat history that is necessary to understand the question
-    3. Make sure the rephrased question contains all information needed to provide a complete answer
-    4. Keep the original intent and scope of the question intact
-    5. Preserve the original language of the question
+    CRITICAL INSTRUCTIONS FOR CONTEXT PRESERVATION:
+    1. **Preserve ALL specific details**: Keep entity names, numerical values, technical terms, program names, and document references from the follow-up question
+    2. **Incorporate relevant context**: Include necessary information from the chat history that helps understand what the user is referring to
+    3. **Maintain reference chains**: If the follow-up question refers to "it", "that program", "the previous document", etc., replace with the actual name/entity from the chat history
+    4. **Keep original intent**: Preserve the exact scope, focus, and purpose of the original question
+    5. **Language preservation**: Maintain the original language of the question
+    6. **Context completeness**: Ensure the standalone question contains ALL information needed for a complete answer without requiring the chat history
+
+    EXAMPLES:
+    - If chat history mentions "Program ABC" and follow-up asks "What are its requirements?", rephrase as "What are the requirements for Program ABC?"
+    - If previous discussion covered multiple programs and follow-up asks "Compare them", specify which programs to compare
+    - If follow-up references "the document we discussed", include the actual document name from chat history
 
     Chat History:
     {chat_history}
     
     Follow Up Input: {question}
     
-    Standalone question:"""
+    Standalone question (must be complete and self-contained):"""
 
     CONDENSE_QUESTION_PROMPT = PromptTemplate.from_template(_template)
     custom_prompts["CONDENSE_QUESTION_PROMPT"] = CONDENSE_QUESTION_PROMPT

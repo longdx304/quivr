@@ -88,12 +88,24 @@ class RAGService:
         self,
         history: list[GetChatHistoryOutput],
     ) -> ChatHistoryCore:
-        # Enhanced chat history with sliding window and relevance scoring
-        transformed_history = format_chat_history(history)
+        # Format the history properly using the existing function
+        formatted_history = format_chat_history(history)
+        
+        # Create ChatHistoryCore and populate it with the formatted messages
         chat_history = ChatHistoryCore(
             brain_id=self.brain.brain_id,
             chat_id=self.chat_id,
         )
+        
+        # Add each formatted message to the chat history (chronological order)
+        # The format_chat_history function returns messages in chronological order:
+        # [HumanMessage(oldest), AIMessage(oldest), HumanMessage(newer), AIMessage(newer), ...]
+        for message in formatted_history:
+            chat_history.append(message)
+        
+        # Log for debugging context preservation
+        logger.debug(f"Built chat history with {len(formatted_history)} messages for chat {self.chat_id}")
+        
         return chat_history
 
     def _compute_message_relevance(self, message) -> float:
