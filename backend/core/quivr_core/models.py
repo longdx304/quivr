@@ -77,6 +77,7 @@ class RAGResponseMetadata(BaseModel):
     followup_questions: list[str] | None = None
     sources: list[Any] | None = None
     metadata_model: ChatLLMMetadata | None = None
+    attribution_validation: dict | None = None  # Source attribution validation results
 
 
 class ParsedRAGResponse(BaseModel):
