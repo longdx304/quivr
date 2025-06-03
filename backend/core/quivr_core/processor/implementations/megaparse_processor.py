@@ -6,13 +6,15 @@ from pathlib import Path
 import tiktoken
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter, TextSplitter
+from langchain_experimental.text_splitter import SemanticChunker
+from langchain_openai.embeddings import OpenAIEmbeddings
 from quivr_core.processor.megaparse import MegaParse
 from quivr_core.processor.megaparse.config import MegaparseConfig
  
 from quivr_core.files.file import QuivrFile
 from quivr_core.processor.processor_base import ProcessorBase
 from quivr_core.processor.registry import FileExtension
-from quivr_core.processor.splitter import SplitterConfig
+from quivr_core.processor.splitter import SplitterConfig, SemanticSplitterConfig
  
 logger = logging.getLogger("quivr_core")
  
@@ -37,7 +39,7 @@ class MegaparseProcessor(ProcessorBase):
     def __init__(
         self,
         splitter: TextSplitter | None = None,
-        splitter_config: SplitterConfig = SplitterConfig(),
+        splitter_config: SplitterConfig | SemanticSplitterConfig = SemanticSplitterConfig(),
         megaparse_config: MegaparseConfig = MegaparseConfig(),
     ) -> None:
         self.loader_cls = MegaParse
@@ -48,27 +50,54 @@ class MegaparseProcessor(ProcessorBase):
         if splitter:
             self.text_splitter = splitter
         else:
-            # Enhanced separators for better semantic chunking
-            semantic_separators = [
-                "\n\n\n",  # Multiple line breaks (major sections)
-                "\n\n",    # Paragraph breaks
-                "\n",      # Line breaks
-                ". ",      # Sentence endings with space
-                "? ",      # Question endings
-                "! ",      # Exclamation endings
-                "; ",      # Semicolon (clause separation)
-                ", ",      # Comma (only as last resort)
-                " ",       # Word boundaries
-                ""         # Character level (final fallback)
-            ]
-            
-            self.text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-                chunk_size=splitter_config.chunk_size,
-                chunk_overlap=splitter_config.chunk_overlap,
-                separators=semantic_separators,
-                keep_separator=True,  # Keep separators to maintain context
-                is_separator_regex=False,
-            )
+            # Check if semantic chunking is requested
+            if isinstance(splitter_config, SemanticSplitterConfig) and splitter_config.chunking_strategy == "semantic":
+                logger.info(f"Using semantic chunking with embedding model: {splitter_config.embedding_model}")
+                
+                # Initialize embeddings based on model
+                if splitter_config.embedding_model.startswith("text-embedding"):
+                    # OpenAI embeddings
+                    embeddings = OpenAIEmbeddings(model=splitter_config.embedding_model)
+                else:
+                    # Default to OpenAI if not specified
+                    logger.warning(f"Unknown embedding model {splitter_config.embedding_model}, defaulting to OpenAI")
+                    embeddings = OpenAIEmbeddings()
+                
+                # Configure semantic chunker with advanced settings
+                self.text_splitter = SemanticChunker(
+                    embeddings=embeddings,
+                    buffer_size=splitter_config.buffer_size,
+                    add_start_index=True,
+                    breakpoint_threshold_type="percentile",
+                    breakpoint_threshold_amount=splitter_config.breakpoint_threshold * 100,  # Convert to percentage
+                    # Add sentence split regex for better Vietnamese/multilingual support
+                    sentence_split_regex=r'(?<=[.!?;])\s+|(?<=[。！？；])\s+|(?<=\.)\s+'
+                )
+                logger.info(f"Semantic chunker initialized with buffer_size={splitter_config.buffer_size}, threshold={splitter_config.breakpoint_threshold}")
+            else:
+                # Fallback to enhanced recursive character text splitter
+                logger.info("Using enhanced recursive character text splitting")
+                # Enhanced separators for better semantic chunking
+                semantic_separators = [
+                    "\n\n\n",  # Multiple line breaks (major sections)
+                    "\n\n",    # Paragraph breaks
+                    "\n",      # Line breaks
+                    ". ",      # Sentence endings with space
+                    "? ",      # Question endings
+                    "! ",      # Exclamation endings
+                    "; ",      # Semicolon (clause separation)
+                    ", ",      # Comma (only as last resort)
+                    " ",       # Word boundaries
+                    ""         # Character level (final fallback)
+                ]
+                
+                self.text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+                    chunk_size=splitter_config.chunk_size,
+                    chunk_overlap=splitter_config.chunk_overlap,
+                    separators=semantic_separators,
+                    keep_separator=True,  # Keep separators to maintain context
+                    is_separator_regex=False,
+                )
  
     def _extract_document_metadata(self, file: QuivrFile, document: Document) -> dict:
         """Extract enhanced metadata for better document identification and context."""
@@ -129,11 +158,27 @@ class MegaparseProcessor(ProcessorBase):
  
     @property
     def processor_metadata(self):
-        return {
+        chunking_strategy = "semantic" if isinstance(self.splitter_config, SemanticSplitterConfig) and self.splitter_config.chunking_strategy == "semantic" else "enhanced_recursive"
+        
+        base_metadata = {
             "chunk_overlap": self.splitter_config.chunk_overlap,
-            "chunking_strategy": "enhanced_semantic",
-            "separators_used": "multi_level_semantic",
+            "chunking_strategy": chunking_strategy,
         }
+        
+        if isinstance(self.splitter_config, SemanticSplitterConfig) and self.splitter_config.chunking_strategy == "semantic":
+            base_metadata.update({
+                "embedding_model": self.splitter_config.embedding_model,
+                "breakpoint_threshold": self.splitter_config.breakpoint_threshold,
+                "buffer_size": self.splitter_config.buffer_size,
+                "semantic_chunking": True
+            })
+        else:
+            base_metadata.update({
+                "separators_used": "multi_level_semantic",
+                "semantic_chunking": False
+            })
+        
+        return base_metadata
  
     async def process_file_inner(self, file: QuivrFile) -> list[Document]:
         mega_parse = MegaParse(file_path=file.path, config=self.megaparse_config)  # type: ignore

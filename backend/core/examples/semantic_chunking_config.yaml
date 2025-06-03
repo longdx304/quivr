@@ -1,0 +1,69 @@
+ingestion_config:
+  parser_config:
+    megaparse_config:
+      strategy: "fast"
+      pdf_parser: "llama_parse" # Use LlamaParse for better parsing quality
+    splitter_config:
+      # Semantic chunking configuration
+      chunking_strategy: "semantic" # Enable semantic chunking
+
+      # Embedding model for semantic similarity calculation
+      embedding_model: "text-embedding-3-large" # OpenAI's latest embedding model
+
+      # Semantic chunking parameters
+      breakpoint_threshold: 0.65 # Threshold for semantic breakpoints (0.0-1.0)
+      buffer_size: 3 # Number of sentences to group before comparing
+      add_embeddings_to_chunks: false # Whether to add embeddings to chunk metadata
+
+      # Traditional parameters (still used for fallback)
+      chunk_size: 800 # Maximum chunk size in tokens
+      chunk_overlap: 200 # Overlap between chunks
+
+retrieval_config:
+  # Maximum number of previous conversation iterations
+  # to include in the context of the answer
+  max_history: 8
+
+  max_files: 30 # Increased for more comprehensive search with semantic chunks
+
+  # Enhanced similarity search parameters
+  similarity_threshold: 0.7 # Higher threshold for semantic chunks
+  context_quality_threshold: 0.75 # Higher quality threshold
+
+  reranker_config:
+    # The reranker supplier to use
+    supplier: "cohere"
+
+    # The model to use for the reranker for the given supplier
+    model: "rerank-multilingual-v3.0"
+
+    # Enhanced number of chunks for better reranking
+    top_n: 12 # More chunks for semantic analysis
+
+  llm_config:
+    # The LLM supplier to use
+    supplier: "openai"
+
+    # The model to use for the LLM for the given supplier
+    model: "gpt-4-turbo-preview"
+
+    # Enhanced token limits for better context with semantic chunks
+    max_input_tokens: 4000 # Larger context for better semantic understanding
+
+    # Maximum number of tokens to pass to the LLM
+    # as a context to generate the answer
+    max_output_tokens: 2500 # Detailed responses
+
+    # Lower temperature for more consistent, accurate responses
+    temperature: 0.1
+    streaming: true
+
+  # Quality enhancement features optimized for semantic chunking
+  quality_enhancements:
+    enable_query_expansion: true
+    enable_context_verification: true
+    enable_source_attribution: true
+    enable_response_validation: true
+    enable_advisory_mode: true
+    enable_structured_formatting: true
+    enable_semantic_ranking: true # New feature for semantic chunk ranking
