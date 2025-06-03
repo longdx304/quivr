@@ -39,7 +39,7 @@ class MegaparseProcessor(ProcessorBase):
     def __init__(
         self,
         splitter: TextSplitter | None = None,
-        splitter_config: SplitterConfig | SemanticSplitterConfig = SplitterConfig(),
+        splitter_config: SplitterConfig | SemanticSplitterConfig = SemanticSplitterConfig(),
         megaparse_config: MegaparseConfig = MegaparseConfig(),
     ) -> None:
         self.loader_cls = MegaParse

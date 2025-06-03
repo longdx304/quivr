@@ -60,10 +60,25 @@ def _build_processor(
             if splitter:
                 self.text_splitter = splitter
             else:
+                semantic_separators = [
+                    "\n\n\n",  # Multiple line breaks (major sections)
+                    "\n\n",    # Paragraph breaks
+                    "\n",      # Line breaks
+                    ". ",      # Sentence endings with space
+                    "? ",      # Question endings
+                    "! ",      # Exclamation endings
+                    "; ",      # Semicolon (clause separation)
+                    ", ",      # Comma (only as last resort)
+                    " ",       # Word boundaries
+                    ""         # Character level (final fallback)
+                ]
                 self.text_splitter = (
                     RecursiveCharacterTextSplitter.from_tiktoken_encoder(
                         chunk_size=splitter_config.chunk_size,
                         chunk_overlap=splitter_config.chunk_overlap,
+                        separators=semantic_separators,
+                        keep_separator=True,  # Keep separators to maintain context
+                        is_separator_regex=False,
                     )
                 )
 

@@ -233,7 +233,7 @@ class LLMEndpointConfig(QuivrBaseConfig):
     llm_api_key: str | None = None
     max_input_tokens: int = 10000
     max_output_tokens: int = 10000
-    temperature: float = 0.3
+    temperature: float = 0.1
     streaming: bool = True
     prompt: CustomPromptsModel | None = None
 
