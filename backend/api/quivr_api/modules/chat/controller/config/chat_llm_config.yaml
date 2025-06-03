@@ -22,5 +22,5 @@ llm_config:
   # as a context to generate the answer
   max_output_tokens: 10000
 
-  temperature: 0.3
+  temperature: 0.1
   streaming: true

@@ -19,13 +19,11 @@ from langchain_community.document_loaders import (
 from langchain_community.document_loaders.base import BaseLoader
 from langchain_community.document_loaders.text import TextLoader
 from langchain_core.documents import Document
-from langchain_text_splitters import TextSplitter
-from langchain_experimental.text_splitter import SemanticChunker
-from langchain_openai.embeddings import OpenAIEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter, TextSplitter
 
 from quivr_core.files.file import FileExtension, QuivrFile
 from quivr_core.processor.processor_base import ProcessorBase
-from quivr_core.processor.splitter import SemanticSplitterConfig, SplitterConfig
+from quivr_core.processor.splitter import SplitterConfig
 
 logger = logging.getLogger("quivr_core")
 
@@ -43,6 +41,7 @@ class ProcessorInit(ProcessorBase):
 def _build_processor(
     cls_name: str, load_cls: Type[P], cls_extensions: List[FileExtension | str]
 ) -> Type[ProcessorInit]:
+    enc = tiktoken.get_encoding("cl100k_base")
 
     class _Processor(ProcessorBase):
         supported_extensions = cls_extensions
@@ -50,10 +49,9 @@ def _build_processor(
         def __init__(
             self,
             splitter: TextSplitter | None = None,
-            splitter_config: SplitterConfig = SemanticSplitterConfig(),
+            splitter_config: SplitterConfig = SplitterConfig(),
             **loader_kwargs: dict[str, Any],
         ) -> None:
-            self.enc = tiktoken.get_encoding("cl100k_base")
             self.loader_cls = load_cls
             self.loader_kwargs = loader_kwargs
 
@@ -62,22 +60,26 @@ def _build_processor(
             if splitter:
                 self.text_splitter = splitter
             else:
-                # self.text_splitter = (
-                #     RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-                #         chunk_size=splitter_config.chunk_size,
-                #         chunk_overlap=splitter_config.chunk_overlap,
-                #     )
-                # )
-                logger.info(f"Using semantic splitter with config with file DOCX")
-                embeddings = OpenAIEmbeddings(model=splitter_config.embedding_model)
-                self.text_splitter = SemanticChunker(
-                    embeddings=embeddings,
-                    buffer_size=splitter_config.buffer_size,
-                    add_start_index=True,
-                    breakpoint_threshold_type="percentile",
-                    breakpoint_threshold_amount=splitter_config.breakpoint_threshold * 100,  # Convert to percentage
-                    # Add sentence split regex for better Vietnamese/multilingual support
-                    sentence_split_regex=r'(?<=[.!?;])\s+|(?<=[。！？；])\s+|(?<=\.)\s+'
+                semantic_separators = [
+                    "\n\n\n",  # Multiple line breaks (major sections)
+                    "\n\n",    # Paragraph breaks
+                    "\n",      # Line breaks
+                    ". ",      # Sentence endings with space
+                    "? ",      # Question endings
+                    "! ",      # Exclamation endings
+                    "; ",      # Semicolon (clause separation)
+                    ", ",      # Comma (only as last resort)
+                    " ",       # Word boundaries
+                    ""         # Character level (final fallback)
+                ]
+                self.text_splitter = (
+                    RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+                        chunk_size=splitter_config.chunk_size,
+                        chunk_overlap=splitter_config.chunk_overlap,
+                        separators=semantic_separators,
+                        keep_separator=True,  # Keep separators to maintain context
+                        is_separator_regex=False,
+                    )
                 )
 
         @property
@@ -97,32 +99,8 @@ def _build_processor(
             documents = await loader.aload()
             docs = self.text_splitter.split_documents(documents)
 
-            # Add chunk-specific metadata to each chunk
-            for i, doc in enumerate(docs):
-                # Preserve all document-level metadata
-                doc.metadata.update(documents.metadata)
-                
-                # Add chunk-specific metadata
-                chunk_token_count = len(self.enc.encode(doc.page_content))
-                doc.metadata.update({
-                    "chunk_size": chunk_token_count,
-                    "chunk_index": i,
-                    "total_chunks": len(docs),
-                    "chunk_position": f"{i+1}/{len(docs)}",
-                    "is_first_chunk": i == 0,
-                    "is_last_chunk": i == len(docs) - 1,
-                })
-                
-                # Add context about the chunk's position in the document
-                if i == 0:
-                    doc.metadata["chunk_type"] = "document_start"
-                elif i == len(docs) - 1:
-                    doc.metadata["chunk_type"] = "document_end"
-                else:
-                    doc.metadata["chunk_type"] = "document_middle"
-                
-                # Add a unique identifier combining source and chunk
-                doc.metadata["chunk_id"] = f"{documents.metadata['content_hash']}_chunk_{i}"
+            for doc in docs:
+                doc.metadata = {"chunk_size": len(enc.encode(doc.page_content))}
 
             return docs
 
