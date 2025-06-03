@@ -32,7 +32,6 @@ from quivr_core.utils import (
     get_chunk_metadata,
     parse_chunk_response,
     parse_response,
-    validate_source_attribution,
 )
 
 logger = logging.getLogger("quivr_core")
@@ -484,18 +483,6 @@ class QuivrQARAGLangGraph:
             metadata=get_chunk_metadata(rolling_message, sources),
             last_chunk=True,
         )
-        
-        # Add source attribution validation to the last chunk if we have sources and a complete answer
-        if sources and prev_answer:
-            attribution_validation = validate_source_attribution(prev_answer, sources)
-            last_chunk.metadata.attribution_validation = attribution_validation
-            
-            # Log validation results for monitoring
-            logger.info(
-                f"Source attribution validation - Score: {attribution_validation['attribution_score']:.2f}, "
-                f"Sources referenced: {attribution_validation['source_count_mentioned']}/{attribution_validation['total_sources_available']}"
-            )
-        
         logger.debug(
             f"answer_astream last_chunk={last_chunk} question={question} rolling_msg={rolling_message} chunk_id={chunk_id}"
         )

@@ -183,15 +183,6 @@ class RAGService:
         metadata = answer.metadata.model_dump() if answer.metadata else {}
         metadata["snippet_color"] = self.brain.snippet_color if self.brain else None
         metadata["snippet_emoji"] = self.brain.snippet_emoji if self.brain else None
-        
-        # Log source attribution validation if available
-        if answer.metadata and hasattr(answer.metadata, 'attribution_validation') and answer.metadata.attribution_validation:
-            attribution_score = answer.metadata.attribution_validation.get('attribution_score', 0.0)
-            logger.info(f"Source attribution score: {attribution_score:.2f} for question: {question[:100]}...")
-            
-            # Include attribution validation in metadata for debugging
-            metadata["attribution_validation"] = answer.metadata.attribution_validation
-        
         logger.info(f"Saving answer with metadata: {metadata}")
         return self.chat_service.update_chat_history(
             CreateChatHistory(
