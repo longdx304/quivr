@@ -19,13 +19,13 @@ TestData = Tuple[List[Vector], KnowledgeDB, Brain]
 
 @pytest.fixture(scope="module")
 def embedder():
-    return DeterministicFakeEmbedding(size=1536)
+    return DeterministicFakeEmbedding(size=3072)
 
 
 @pytest.fixture(scope="function")
 def test_data(sync_session: Session, embedder) -> TestData:
     user_1 = (
-        sync_session.exec(select(User).where(User.email == "admin@quivr.app"))
+        sync_session.exec(select(User).where(User.email == "admin@traphaco.com"))
     ).one()
     assert user_1.id
     vectors = embedder.embed_documents(

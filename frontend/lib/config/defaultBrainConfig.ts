@@ -29,6 +29,6 @@ export const addBrainDefaultValues: CreateBrainInput = {
   integration: undefined,
 };
 
-export const defaultModel: Model = "gpt-3.5-turbo";
+export const defaultModel: Model = "gpt-4o-mini";
 export const defaultMaxTokens = 1000;
 export const defaultTemperature = 0;

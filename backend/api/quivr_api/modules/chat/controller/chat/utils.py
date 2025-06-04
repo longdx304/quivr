@@ -82,7 +82,7 @@ def update_user_usage(usage: UserUsage, user_settings, cost: int = 100):
 
     date = time.strftime("%Y%m%d")
 
-    monthly_chat_credit = user_settings.get("monthly_chat_credit", 100)
+    monthly_chat_credit = user_settings.get("monthly_chat_credit", 1000)
     montly_usage = usage.get_user_monthly_usage(date)
 
     if int(montly_usage + cost) > int(monthly_chat_credit):

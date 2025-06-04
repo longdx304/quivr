@@ -1,43 +1,42 @@
-# Quivr - Your Second Brain, Empowered by Generative AI
+# Chatbot - Your Second Brain, Empowered by Generative AI
 
 <div align="center">
-    <img src="./logo.png" alt="Quivr-logo" width="31%"  style="border-radius: 50%; padding-bottom: 20px"/>
+    <img src="./logo.png" alt="Chatbot-logo" width="31%"  style="border-radius: 50%; padding-bottom: 20px"/>
 </div>
 
 [![Discord Follow](https://dcbadge.vercel.app/api/server/HUpRgp2HG8?style=flat)](https://discord.gg/HUpRgp2HG8)
-[![GitHub Repo stars](https://img.shields.io/github/stars/quivrhq/quivr?style=social)](https://github.com/quivrhq/quivr)
+[![GitHub Repo stars](https://img.shields.io/github/stars/quivrhq/chatbot?style=social)](https://github.com/quivrhq/chatbot)
 [![Twitter Follow](https://img.shields.io/twitter/follow/StanGirard?style=social)](https://twitter.com/_StanGirard)
 
-Quivr, your second brain, utilizes the power of GenerativeAI to be your personal assistant ! Think of it as Obsidian, but turbocharged with AI capabilities.
+Chatbot, your second brain, utilizes the power of GenerativeAI to be your personal assistant ! Think of it as Obsidian, but turbocharged with AI capabilities.
 
-[Roadmap here](https://docs.quivr.app/docs/roadmap)
+[Roadmap here](https://docs.chatbot.app/docs/roadmap)
 
 ## Key Features 🎯
 
-- **Fast and Efficient**: Designed with speed and efficiency at its core. Quivr ensures rapid access to your data.
+- **Fast and Efficient**: Designed with speed and efficiency at its core. Chatbot ensures rapid access to your data.
 - **Secure**: Your data, your control. Always.
 - **OS Compatible**: Ubuntu 20 or newer.
 - **File Compatibility**: Text, Markdown, PDF, Powerpoint, Excel, CSV, Word, Audio, Video
-- **Open Source**: Freedom is beautiful, and so is Quivr. Open source and free to use.
+- **Open Source**: Freedom is beautiful, and so is Chatbot. Open source and free to use.
 - **Public/Private**: Share your brains with your users via a public link, or keep them private.
-- **Offline Mode**: Quivr works offline, so you can access your data anytime, anywhere.
+- **Offline Mode**: Chatbot works offline, so you can access your data anytime, anywhere.
 
 ## Demo Highlight 🎥
 
-https://github.com/quivrhq/quivr/assets/19614572/a6463b73-76c7-4bc0-978d-70562dca71f5
+https://github.com/quivrhq/chatbot/assets/19614572/a6463b73-76c7-4bc0-978d-70562dca71f5
 
 ## Getting Started 🚀
 
-You can deploy Quivr to Porter Cloud with one-click:
+You can deploy Chatbot to Porter Cloud with one-click:
 
-<a href="https://cloud.porter.run/addons/new?addon_name=quivr" target="_blank">
+<a href="https://cloud.porter.run/addons/new?addon_name=chatbot" target="_blank">
   <img src="https://mintlify.s3-us-west-1.amazonaws.com/porter/images/deploying-applications/deploy-to-porter.svg" alt="Deploy to Porter" style="width: 150px;">
 </a>
 
-
 If you would like to deploy locally, follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
 
-You can find everything on the [documentation](https://docs.quivr.app/).
+You can find everything on the [documentation](https://docs.chatbot.app/).
 
 ### Prerequisites 📋
 
@@ -58,11 +57,10 @@ You can find the installation video [here](https://www.youtube.com/watch?v=cXBa6
   supabase -v # Check that the installation worked
   ```
 
-
 - **Step 1**: Clone the repository:
 
   ```bash
-  git clone https://github.com/quivrhq/quivr.git && cd quivr
+  git clone https://github.com/quivrhq/chatbot.git && cd chatbot
   ```
 
 - **Step 2**: Copy the `.env.example` files
@@ -81,13 +79,14 @@ You can find the installation video [here](https://www.youtube.com/watch?v=cXBa6
 
   You just need to update the `OPENAI_API_KEY` variable in the `.env` file. You can get your API key [here](https://platform.openai.com/api-keys). You need to create an account first. And put your credit card information. Don't worry, you won't be charged unless you use the API. You can find more information about the pricing [here](https://openai.com/pricing/).
 
-
 - **Step 4**: Launch the project
 
   ```bash
   cd backend && supabase start
   ```
-  and then 
+
+  and then
+
   ```bash
   cd ../
   docker compose pull
@@ -100,13 +99,13 @@ You can find the installation video [here](https://www.youtube.com/watch?v=cXBa6
 
 - **Step 5**: Login to the app
 
-  You can now sign in to the app with `admin@quivr.app` & `admin`. You can access the app at [http://localhost:3000/login](http://localhost:3000/login).
+  You can now sign in to the app with `admin@traphaco.com` & `admin`. You can access the app at [http://localhost:3000/login](http://localhost:3000/login).
 
-  You can access Quivr backend API at [http://localhost:5050/docs](http://localhost:5050/docs)
+  You can access Chatbot backend API at [http://localhost:5050/docs](http://localhost:5050/docs)
 
   You can access supabase at [http://localhost:54323](http://localhost:54323)
 
-## Updating Quivr 🚀
+## Updating Chatbot 🚀
 
 - **Step 1**: Pull the latest changes
 
@@ -120,29 +119,27 @@ You can find the installation video [here](https://www.youtube.com/watch?v=cXBa6
   supabase migration up
   ```
 
-
 ## Contributors ✨
 
 Thanks go to these wonderful people:
-<a href="https://github.com/quivrhq/quivr/graphs/contributors">
-<img src="https://contrib.rocks/image?repo=quivrhq/quivr" />
+<a href="https://github.com/quivrhq/chatbot/graphs/contributors">
+<img src="https://contrib.rocks/image?repo=quivrhq/chatbot" />
 </a>
 
 ## Contribute 🤝
 
 Did you get a pull request? Open it, and we'll review it as soon as possible. Check out our project board [here](https://github.com/users/StanGirard/projects/5) to see what we're currently focused on, and feel free to bring your fresh ideas to the table!
 
-- [Open Issues](https://github.com/quivrhq/quivr/issues)
-- [Open Pull Requests](https://github.com/quivrhq/quivr/pulls)
-- [Good First Issues](https://github.com/quivrhq/quivr/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22)
-- [Frontend Issues](https://github.com/quivrhq/quivr/issues?q=is%3Aopen+is%3Aissue+label%3Afrontend)
-- [Backend Issues](https://github.com/quivrhq/quivr/issues?q=is%3Aopen+is%3Aissue+label%3Abackend)
-- [Translate](https://docs.quivr.app/docs/Developers/contribution/guidelines#translations)
+- [Open Issues](https://github.com/quivrhq/chatbot/issues)
+- [Open Pull Requests](https://github.com/quivrhq/chatbot/pulls)
+- [Good First Issues](https://github.com/quivrhq/chatbot/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22)
+- [Frontend Issues](https://github.com/quivrhq/chatbot/issues?q=is%3Aopen+is%3Aissue+label%3Afrontend)
+- [Backend Issues](https://github.com/quivrhq/chatbot/issues?q=is%3Aopen+is%3Aissue+label%3Abackend)
+- [Translate](https://docs.chatbot.app/docs/Developers/contribution/guidelines#translations)
 
 ## Partners ❤️
 
 This project would not be possible without the support of our partners. Thank you for your support!
-
 
 <a href="https://ycombinator.com/">
     <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Y_Combinator_logo.svg/1200px-Y_Combinator_logo.svg.png" alt="YCombinator" style="padding: 10px" width="70px">
@@ -157,4 +154,4 @@ This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENS
 
 ## Stars History 📈
 
-[![Star History Chart](https://api.star-history.com/svg?repos=quivrhq/quivr&type=Timeline)](https://star-history.com/#quivrhq/quivr&Timeline)
+[![Star History Chart](https://api.star-history.com/svg?repos=quivrhq/chatbot&type=Timeline)](https://star-history.com/#quivrhq/chatbot&Timeline)

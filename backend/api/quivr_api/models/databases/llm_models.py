@@ -7,7 +7,7 @@ class LLMModel(BaseModel):
         BaseModel (BaseModel): Pydantic BaseModel
     """
 
-    name: str = "gpt-3.5-turbo-0125"
+    name: str = "gpt-40-mini"
     price: int = 1
-    max_input: int = 512
-    max_output: int = 512
+    max_input: int = 10000
+    max_output: int = 10000
