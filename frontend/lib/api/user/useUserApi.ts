@@ -1,9 +1,15 @@
 import { useAxios } from '@/lib/hooks';
 
 import {
+  adminResetPassword,
+  AdminResetPasswordRequest,
+  AdminResetPasswordResponse,
   createUser,
   CreateUserRequest,
   CreateUserResponse,
+  deactivateUser,
+  DeactivateUserRequest,
+  DeactivateUserResponse,
   deleteUserData,
   getAllUsers,
   getUser,
@@ -43,5 +49,11 @@ export const useUserApi = () => {
     resetPassword: async (
       passwordData: ResetPasswordRequest
     ): Promise<ResetPasswordResponse> => resetPassword(passwordData, axiosInstance),
+    adminResetPassword: async (
+      passwordData: AdminResetPasswordRequest
+    ): Promise<AdminResetPasswordResponse> => adminResetPassword(passwordData, axiosInstance),
+    deactivateUser: async (
+      deactivateData: DeactivateUserRequest
+    ): Promise<DeactivateUserResponse> => deactivateUser(deactivateData, axiosInstance),
   };
 };

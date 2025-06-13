@@ -78,6 +78,24 @@ export type ResetPasswordResponse = {
   message: string;
 };
 
+export type AdminResetPasswordRequest = {
+  user_id: string;
+  new_password: string;
+  confirm_password: string;
+};
+
+export type AdminResetPasswordResponse = {
+  message: string;
+};
+
+export type DeactivateUserRequest = {
+  user_id: string;
+};
+
+export type DeactivateUserResponse = {
+  message: string;
+};
+
 export const updateUserIdentity = async (
   userUpdatableProperties: UserIdentityUpdatableProperties,
   axiosInstance: AxiosInstance
@@ -141,6 +159,32 @@ export const resetPassword = async (
   const response = await axiosInstance.post(
     "/user/reset-password",
     passwordData
+  );
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return response.data;
+};
+
+export const adminResetPassword = async (
+  passwordData: AdminResetPasswordRequest,
+  axiosInstance: AxiosInstance
+): Promise<AdminResetPasswordResponse> => {
+  const response = await axiosInstance.post(
+    "/admin/reset-password",
+    passwordData
+  );
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return response.data;
+};
+
+export const deactivateUser = async (
+  deactivateData: DeactivateUserRequest,
+  axiosInstance: AxiosInstance
+): Promise<DeactivateUserResponse> => {
+  const response = await axiosInstance.post(
+    "/admin/deactivate-user",
+    deactivateData
   );
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return

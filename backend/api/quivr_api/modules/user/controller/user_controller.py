@@ -6,7 +6,7 @@ from quivr_api.middlewares.auth import AuthBearer, get_current_user
 from quivr_api.modules.brain.service.brain_user_service import BrainUserService
 from quivr_api.modules.dependencies import get_service
 from quivr_api.modules.models.service.model_service import ModelService
-from quivr_api.modules.user.dto.inputs import CreateUserRequest, UserUpdatableProperties, UpdateUserRequest
+from quivr_api.modules.user.dto.inputs import CreateUserRequest, UserUpdatableProperties, UpdateUserRequest, AdminResetPasswordRequest, DeactivateUserRequest
 from quivr_api.modules.user.entity.user_identity import UserIdentity
 from quivr_api.modules.user.repository.users import Users
 from quivr_api.modules.user.service.user_service import UserService
@@ -207,4 +207,46 @@ async def reset_password_endpoint(
         return user_service.reset_password(current_user.id, password_data)
     except Exception as e:
         logger.error(f"Error resetting password: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@user_router.post("/admin/reset-password", dependencies=[Depends(AuthBearer())], tags=["Admin"])
+async def admin_reset_password_endpoint(
+    password_data: AdminResetPasswordRequest,
+    current_user: UserIdentity = Depends(get_current_user),
+):
+    """
+    Admin reset user password (without requiring current password).
+    
+    - `password_data`: The password data containing user_id and new password.
+    - `current_user`: The current authenticated user (must be admin).
+    
+    This endpoint allows an admin to reset any user's password without knowing their current password.
+    """
+    try:
+        logger.info(f"Admin resetting password for user: {password_data.user_id}. Requested by: {current_user.id}")
+        return user_service.admin_reset_password(password_data)
+    except Exception as e:
+        logger.error(f"Error in admin password reset: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@user_router.post("/admin/deactivate-user", dependencies=[Depends(AuthBearer())], tags=["Admin"])
+async def deactivate_user_endpoint(
+    deactivate_data: DeactivateUserRequest,
+    current_user: UserIdentity = Depends(get_current_user),
+):
+    """
+    Deactivate a user account.
+    
+    - `deactivate_data`: The data containing user_id to deactivate.
+    - `current_user`: The current authenticated user (must be admin).
+    
+    This endpoint allows an admin to deactivate a user account.
+    """
+    try:
+        logger.info(f"Deactivating user: {deactivate_data.user_id}. Requested by: {current_user.id}")
+        return user_service.deactivate_user(deactivate_data)
+    except Exception as e:
+        logger.error(f"Error deactivating user: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))

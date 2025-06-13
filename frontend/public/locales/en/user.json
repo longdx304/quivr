@@ -47,5 +47,12 @@
 	"new_password": "New password",
 	"new_password_plc": "Enter your new password",
 	"confirm_password": "Confirm password",
-	"confirm_password_plc": "Re-enter your new password"
+	"confirm_password_plc": "Re-enter your new password",
+	"admin_reset_password": "Admin Reset Password",
+	"reset_password_for": "Reset password for",
+	"password_reset_success": "Password has been reset successfully!",
+	"success": "Success",
+	"confirm_password_required": "Password confirmation is required",
+	"confirm_deactivate": "Confirm Deactivation",
+	"deactivate_user_warning": "This action will deactivate the user account and remove all brain associations. The user will no longer be able to access the system."
 }

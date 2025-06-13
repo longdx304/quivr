@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 from typing import List, Dict, Any
 from uuid import UUID
 
-from quivr_api.modules.user.dto.inputs import CreateUserRequest, UserUpdatableProperties, UpdateUserRequest, ResetPasswordRequest
+from quivr_api.modules.user.dto.inputs import CreateUserRequest, UserUpdatableProperties, UpdateUserRequest, ResetPasswordRequest, AdminResetPasswordRequest, DeactivateUserRequest
 from quivr_api.modules.user.entity.user_identity import UserIdentity
 from quivr_api.modules.user.repository.users import Users
 from quivr_api.modules.user.repository.users_interface import UsersInterface
@@ -255,3 +255,75 @@ class UserService:
             "email": user_data.email,
             "username": f"{user_data.firstName} {user_data.lastName}"
         }
+
+    def admin_reset_password(self, password_data: AdminResetPasswordRequest) -> Dict[str, Any]:
+        """Admin reset user password (without requiring current password)
+        
+        Args:
+            password_data: Password data containing user_id and new password
+            
+        Returns:
+            Dict with success message
+            
+        Raises:
+            Exception: If password reset fails
+        """
+        # Validate new password
+        if not is_valid_password(password_data.new_password):
+            raise Exception("Password must be at least 6 characters long")
+            
+        # Validate password confirmation
+        if password_data.new_password != password_data.confirm_password:
+            raise Exception("New password and confirmation do not match")
+            
+        try:
+            # Update password directly using admin privileges
+            auth_response = self.supabase_client.auth.admin.update_user_by_id(
+                password_data.user_id,
+                {"password": password_data.new_password}
+            )
+            
+            if not auth_response.user:
+                raise Exception("Failed to update password")
+                
+            logger.info(f"Admin reset password for user: {password_data.user_id}")
+            return {"message": "Password updated successfully"}
+            
+        except Exception as e:
+            logger.error(f"Error in admin password reset: {e}")
+            raise Exception(f"Error resetting password: {str(e)}")
+
+    def deactivate_user(self, deactivate_data: DeactivateUserRequest) -> Dict[str, Any]:
+        """Deactivate a user account
+        
+        Args:
+            deactivate_data: Data containing user_id to deactivate
+            
+        Returns:
+            Dict with success message
+            
+        Raises:
+            Exception: If deactivation fails
+        """
+        try:
+            # Disable the user in Supabase Auth
+            auth_response = self.supabase_client.auth.admin.update_user_by_id(
+                deactivate_data.user_id,
+                {
+                    "user_metadata": {"deactivated": True},
+                    "app_metadata": {"deactivated": True}
+                }
+            )
+            
+            if not auth_response.user:
+                raise Exception("Failed to deactivate user")
+                
+            # Also remove all brain associations
+            self.supabase_client.table("brains_users").delete().eq("user_id", deactivate_data.user_id).execute()
+                
+            logger.info(f"User deactivated: {deactivate_data.user_id}")
+            return {"message": "User deactivated successfully"}
+            
+        except Exception as e:
+            logger.error(f"Error deactivating user: {e}")
+            raise Exception(f"Error deactivating user: {str(e)}")

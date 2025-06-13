@@ -1,0 +1,1 @@
+export { DeactivateUserModal } from "./DeactivateUserModal";

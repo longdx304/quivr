@@ -6,7 +6,9 @@ import { useTranslation } from "react-i18next";
 
 import { useUserApi } from "@/lib/api/user/useUserApi";
 import { UserIdentity } from "@/lib/api/user/user";
+import { AdminResetPasswordModal } from "@/lib/components/AdminResetPasswordModal/AdminResetPasswordModal";
 import { CreateUserModal } from "@/lib/components/CreateUserModal/CreateUserModal";
+import { DeactivateUserModal } from "@/lib/components/DeactivateUserModal/DeactivateUserModal";
 import { Icon } from "@/lib/components/ui/Icon/Icon";
 import Spinner from "@/lib/components/ui/Spinner";
 import Table from "@/lib/components/ui/Table/Table";
@@ -25,6 +27,8 @@ export const ListAllUsers = (): JSX.Element => {
     null
   );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
+  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserIdentity | null>(null);
   const { getAllUsers } = useUserApi();
 
@@ -148,11 +152,25 @@ export const ListAllUsers = (): JSX.Element => {
                     <Icon name='edit' size='small' color='primary' />
                     <span>{t("edit_user", { ns: "user" })}</span>
                   </div>
-                  <div className={styles.actions_dropdown_item}>
+                  <div 
+                    className={styles.actions_dropdown_item}
+                    onClick={() => {
+                      setSelectedUser(row.original);
+                      setIsResetPasswordModalOpen(true);
+                      setShowActionsDropdown(null);
+                    }}
+                  >
                     <Icon name='key' size='small' color='primary' />
                     <span>{t("reset_password", { ns: "user" })}</span>
                   </div>
-                  <div className={styles.actions_dropdown_item}>
+                  <div 
+                    className={styles.actions_dropdown_item}
+                    onClick={() => {
+                      setSelectedUser(row.original);
+                      setIsDeactivateModalOpen(true);
+                      setShowActionsDropdown(null);
+                    }}
+                  >
                     <Icon name='delete' size='small' color='dangerous' />
                     <span>{t("deactivate_user", { ns: "user" })}</span>
                   </div>
@@ -250,12 +268,36 @@ export const ListAllUsers = (): JSX.Element => {
         className={styles.users_table}
       />
 
+      {/* Edit User Modal */}
       {selectedUser && (
         <CreateUserModal
           isOpen={isEditModalOpen}
           setOpen={setIsEditModalOpen}
           isEditMode={true}
           userData={selectedUser}
+          onSuccess={refreshData}
+        />
+      )}
+
+      {/* Admin Reset Password Modal */}
+      {selectedUser && (
+        <AdminResetPasswordModal
+          isOpen={isResetPasswordModalOpen}
+          setOpen={setIsResetPasswordModalOpen}
+          userId={selectedUser.id}
+          userEmail={selectedUser.email || ""}
+          onSuccess={refreshData}
+        />
+      )}
+
+      {/* Deactivate User Modal */}
+      {selectedUser && (
+        <DeactivateUserModal
+          isOpen={isDeactivateModalOpen}
+          setOpen={setIsDeactivateModalOpen}
+          userId={selectedUser.id}
+          userEmail={selectedUser.email || ""}
+          userName={selectedUser.username || ""}
           onSuccess={refreshData}
         />
       )}
