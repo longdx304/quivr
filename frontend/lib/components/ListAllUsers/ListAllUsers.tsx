@@ -6,14 +6,12 @@ import { useTranslation } from "react-i18next";
 
 import { useUserApi } from "@/lib/api/user/useUserApi";
 import { UserIdentity } from "@/lib/api/user/user";
-import { AdminResetPasswordModal } from "@/lib/components/AdminResetPasswordModal/AdminResetPasswordModal";
-import { CreateUserModal } from "@/lib/components/CreateUserModal/CreateUserModal";
-import { DeactivateUserModal } from "@/lib/components/DeactivateUserModal/DeactivateUserModal";
 import { Icon } from "@/lib/components/ui/Icon/Icon";
 import Spinner from "@/lib/components/ui/Spinner";
 import Table from "@/lib/components/ui/Table/Table";
 
 import styles from "./ListAllUsers.module.scss";
+import { UserModals } from "./UserModals";
 
 export const ListAllUsers = (): JSX.Element => {
   const { t } = useTranslation(["user"]);
@@ -27,7 +25,8 @@ export const ListAllUsers = (): JSX.Element => {
     null
   );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] =
+    useState(false);
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserIdentity | null>(null);
   const { getAllUsers } = useUserApi();
@@ -86,7 +85,7 @@ export const ListAllUsers = (): JSX.Element => {
                       brains.length > 1 ? "s" : ""
                     } khác`
                   : "Không có brain"}{" "}
-                <Icon name='chevronDown' size='small' color='primary' />
+                <Icon name="chevronDown" size="small" color="primary" />
               </div>
 
               {showBrainsDropdown === userId && (
@@ -133,7 +132,7 @@ export const ListAllUsers = (): JSX.Element => {
                   );
                 }}
               >
-                <Icon name='more' size='small' color='primary' />
+                <Icon name="more" size="small" color="primary" />
               </button>
 
               {showActionsDropdown === userId && (
@@ -149,10 +148,10 @@ export const ListAllUsers = (): JSX.Element => {
                       setShowActionsDropdown(null);
                     }}
                   >
-                    <Icon name='edit' size='small' color='primary' />
+                    <Icon name="edit" size="small" color="primary" />
                     <span>{t("edit_user", { ns: "user" })}</span>
                   </div>
-                  <div 
+                  <div
                     className={styles.actions_dropdown_item}
                     onClick={() => {
                       setSelectedUser(row.original);
@@ -160,10 +159,10 @@ export const ListAllUsers = (): JSX.Element => {
                       setShowActionsDropdown(null);
                     }}
                   >
-                    <Icon name='key' size='small' color='primary' />
+                    <Icon name="key" size="small" color="primary" />
                     <span>{t("reset_password", { ns: "user" })}</span>
                   </div>
-                  <div 
+                  <div
                     className={styles.actions_dropdown_item}
                     onClick={() => {
                       setSelectedUser(row.original);
@@ -171,7 +170,7 @@ export const ListAllUsers = (): JSX.Element => {
                       setShowActionsDropdown(null);
                     }}
                   >
-                    <Icon name='delete' size='small' color='dangerous' />
+                    <Icon name="delete" size="small" color="dangerous" />
                     <span>{t("deactivate_user", { ns: "user" })}</span>
                   </div>
                 </div>
@@ -184,7 +183,6 @@ export const ListAllUsers = (): JSX.Element => {
     [showBrainsDropdown, showActionsDropdown]
   );
 
-  // Simple function to load users data
   const loadUsers = async () => {
     try {
       setIsLoading(true);
@@ -199,17 +197,10 @@ export const ListAllUsers = (): JSX.Element => {
     }
   };
 
-  // Load users on component mount
   useEffect(() => {
     void loadUsers();
   }, []);
 
-  // Function to manually refresh data
-  const refreshData = () => {
-    void loadUsers();
-  };
-
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = () => {
       if (showBrainsDropdown !== null) {
@@ -239,7 +230,7 @@ export const ListAllUsers = (): JSX.Element => {
   if (error) {
     return (
       <div className={styles.error_container}>
-        <Icon name='warning' size='large' color='warning' />
+        <Icon name="warning" size="large" color="warning" />
         <p>{error}</p>
       </div>
     );
@@ -254,10 +245,12 @@ export const ListAllUsers = (): JSX.Element => {
         </div>
         <button
           className={styles.refresh_button}
-          onClick={refreshData}
+          onClick={() => {
+            void loadUsers();
+          }}
           disabled={isLoading}
         >
-          <Icon name='sync' size='small' color='primary' />
+          <Icon name="sync" size="small" color="primary" />
           {isLoading ? "Loading..." : "Làm mới"}
         </button>
       </div>
@@ -268,37 +261,18 @@ export const ListAllUsers = (): JSX.Element => {
         className={styles.users_table}
       />
 
-      {/* Edit User Modal */}
       {selectedUser && (
-        <CreateUserModal
-          isOpen={isEditModalOpen}
-          setOpen={setIsEditModalOpen}
-          isEditMode={true}
-          userData={selectedUser}
-          onSuccess={refreshData}
-        />
-      )}
-
-      {/* Admin Reset Password Modal */}
-      {selectedUser && (
-        <AdminResetPasswordModal
-          isOpen={isResetPasswordModalOpen}
-          setOpen={setIsResetPasswordModalOpen}
-          userId={selectedUser.id}
-          userEmail={selectedUser.email || ""}
-          onSuccess={refreshData}
-        />
-      )}
-
-      {/* Deactivate User Modal */}
-      {selectedUser && (
-        <DeactivateUserModal
-          isOpen={isDeactivateModalOpen}
-          setOpen={setIsDeactivateModalOpen}
-          userId={selectedUser.id}
-          userEmail={selectedUser.email || ""}
-          userName={selectedUser.username || ""}
-          onSuccess={refreshData}
+        <UserModals
+          selectedUser={selectedUser}
+          isEditModalOpen={isEditModalOpen}
+          setIsEditModalOpen={setIsEditModalOpen}
+          isResetPasswordModalOpen={isResetPasswordModalOpen}
+          setIsResetPasswordModalOpen={setIsResetPasswordModalOpen}
+          isDeactivateModalOpen={isDeactivateModalOpen}
+          setIsDeactivateModalOpen={setIsDeactivateModalOpen}
+          onSuccess={() => {
+            void loadUsers();
+          }}
         />
       )}
     </div>

@@ -5,6 +5,7 @@ import { useUserApi } from "@/lib/api/user/useUserApi";
 import { DeactivateUserRequest } from "@/lib/api/user/user";
 import { Modal } from "@/lib/components/ui/Modal/Modal";
 import { QuivrButton } from "@/lib/components/ui/QuivrButton/QuivrButton";
+import { useToast } from "@/lib/hooks/useToast";
 
 import styles from "./DeactivateUserModal.module.scss";
 
@@ -29,6 +30,7 @@ export const DeactivateUserModal = ({
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { deactivateUser } = useUserApi();
+  const { publish } = useToast();
 
   const handleDeactivate = async (): Promise<void> => {
     try {
@@ -41,19 +43,32 @@ export const DeactivateUserModal = ({
 
       await deactivateUser(deactivateData);
 
+      // Show success toast
+      publish({
+        variant: "success",
+        text: t("deactivate_user_success_toast", {
+          defaultValue: `User ${userName} (${userEmail}) has been deactivated successfully!`,
+        }),
+      });
+
       // Close modal and call success callback
       setOpen(false);
       if (onSuccess) {
         onSuccess();
       }
+    } catch (err) {
+      console.error("Error deactivating user:", err);
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to deactivate user";
+      setError(errorMessage);
 
-    } catch (error) {
-      console.error("Error deactivating user:", error);
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to deactivate user"
-      );
+      // Show error toast
+      publish({
+        variant: "danger",
+        text: t("deactivate_user_error_toast", {
+          defaultValue: `Failed to deactivate user ${userName}: ${errorMessage}`,
+        }),
+      });
     } finally {
       setIsDeactivating(false);
     }
@@ -66,7 +81,7 @@ export const DeactivateUserModal = ({
 
   return (
     <Modal
-      title={t("deactivate_user", { ns: "user" })}
+      title={t("deactivate_user", { defaultValue: "Deactivate User" })}
       isOpen={isOpen}
       setOpen={setOpen}
       size="auto"
@@ -74,13 +89,23 @@ export const DeactivateUserModal = ({
     >
       <div className={styles.modal_wrapper}>
         <div className={styles.warning_message}>
-          <h3>{t("confirm_deactivate", { ns: "user" })}</h3>
+          <h3>
+            {t("confirm_deactivate", { defaultValue: "Confirm Deactivation" })}
+          </h3>
           <div className={styles.user_info}>
-            <p><strong>{t("name", { ns: "user" })}:</strong> {userName}</p>
-            <p><strong>{t("email", { ns: "user" })}:</strong> {userEmail}</p>
+            <p>
+              <strong>{t("name", { defaultValue: "Name" })}:</strong> {userName}
+            </p>
+            <p>
+              <strong>{t("email", { defaultValue: "Email" })}:</strong>{" "}
+              {userEmail}
+            </p>
           </div>
           <p className={styles.warning_text}>
-            {t("deactivate_user_warning", { ns: "user" })}
+            {t("deactivate_user_warning", {
+              defaultValue:
+                "This action cannot be undone. Are you sure you want to deactivate this user?",
+            })}
           </p>
         </div>
 
@@ -90,18 +115,20 @@ export const DeactivateUserModal = ({
           <QuivrButton
             onClick={handleCancel}
             color="primary"
-            label={t("cancel", { ns: "user" })}
+            label={t("cancel", { defaultValue: "Cancel" })}
             iconName="close"
           />
           <QuivrButton
             onClick={handleDeactivate}
             isLoading={isDeactivating}
             color="dangerous"
-            label={t("confirm_deactivate", { ns: "user" })}
+            label={t("confirm_deactivate", {
+              defaultValue: "Confirm Deactivation",
+            })}
             iconName="delete"
           />
         </div>
       </div>
     </Modal>
   );
-}; 
+};
