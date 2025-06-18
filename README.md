@@ -1,12 +1,6 @@
 # Chatbot - Your Second Brain, Empowered by Generative AI
 
-<div align="center">
-    <img src="./logo.png" alt="Chatbot-logo" width="31%"  style="border-radius: 50%; padding-bottom: 20px"/>
-</div>
-
 Chatbot, your second brain, utilizes the power of GenerativeAI to be your personal assistant ! Think of it as Obsidian, but turbocharged with AI capabilities.
-
-[Roadmap here](https://docs.chatbot.app/docs/roadmap)
 
 ## Key Features 🎯
 
@@ -18,19 +12,7 @@ Chatbot, your second brain, utilizes the power of GenerativeAI to be your person
 - **Public/Private**: Share your brains with your users via a public link, or keep them private.
 - **Offline Mode**: Chatbot works offline, so you can access your data anytime, anywhere.
 
-## Demo Highlight 🎥
-
-https://github.com/quivrhq/chatbot/assets/19614572/a6463b73-76c7-4bc0-978d-70562dca71f5
-
 ## Getting Started 🚀
-
-You can deploy Chatbot to Porter Cloud with one-click:
-
-<a href="https://cloud.porter.run/addons/new?addon_name=chatbot" target="_blank">
-  <img src="https://mintlify.s3-us-west-1.amazonaws.com/porter/images/deploying-applications/deploy-to-porter.svg" alt="Deploy to Porter" style="width: 150px;">
-</a>
-
-If you would like to deploy locally, follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
 
 ### Prerequisites 📋
 
