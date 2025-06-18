@@ -4,10 +4,6 @@
     <img src="./logo.png" alt="Chatbot-logo" width="31%"  style="border-radius: 50%; padding-bottom: 20px"/>
 </div>
 
-[![Discord Follow](https://dcbadge.vercel.app/api/server/HUpRgp2HG8?style=flat)](https://discord.gg/HUpRgp2HG8)
-[![GitHub Repo stars](https://img.shields.io/github/stars/quivrhq/chatbot?style=social)](https://github.com/quivrhq/chatbot)
-[![Twitter Follow](https://img.shields.io/twitter/follow/StanGirard?style=social)](https://twitter.com/_StanGirard)
-
 Chatbot, your second brain, utilizes the power of GenerativeAI to be your personal assistant ! Think of it as Obsidian, but turbocharged with AI capabilities.
 
 [Roadmap here](https://docs.chatbot.app/docs/roadmap)
@@ -35,8 +31,6 @@ You can deploy Chatbot to Porter Cloud with one-click:
 </a>
 
 If you would like to deploy locally, follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
-
-You can find everything on the [documentation](https://docs.chatbot.app/).
 
 ### Prerequisites 📋
 
@@ -118,40 +112,3 @@ You can find the installation video [here](https://www.youtube.com/watch?v=cXBa6
   ```bash
   supabase migration up
   ```
-
-## Contributors ✨
-
-Thanks go to these wonderful people:
-<a href="https://github.com/quivrhq/chatbot/graphs/contributors">
-<img src="https://contrib.rocks/image?repo=quivrhq/chatbot" />
-</a>
-
-## Contribute 🤝
-
-Did you get a pull request? Open it, and we'll review it as soon as possible. Check out our project board [here](https://github.com/users/StanGirard/projects/5) to see what we're currently focused on, and feel free to bring your fresh ideas to the table!
-
-- [Open Issues](https://github.com/quivrhq/chatbot/issues)
-- [Open Pull Requests](https://github.com/quivrhq/chatbot/pulls)
-- [Good First Issues](https://github.com/quivrhq/chatbot/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22)
-- [Frontend Issues](https://github.com/quivrhq/chatbot/issues?q=is%3Aopen+is%3Aissue+label%3Afrontend)
-- [Backend Issues](https://github.com/quivrhq/chatbot/issues?q=is%3Aopen+is%3Aissue+label%3Abackend)
-- [Translate](https://docs.chatbot.app/docs/Developers/contribution/guidelines#translations)
-
-## Partners ❤️
-
-This project would not be possible without the support of our partners. Thank you for your support!
-
-<a href="https://ycombinator.com/">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Y_Combinator_logo.svg/1200px-Y_Combinator_logo.svg.png" alt="YCombinator" style="padding: 10px" width="70px">
-</a>
-<a href="https://www.theodo.fr/">
-  <img src="https://avatars.githubusercontent.com/u/332041?s=200&v=4" alt="Theodo" style="padding: 10px" width="70px">
-</a>
-
-## License 📄
-
-This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details
-
-## Stars History 📈
-
-[![Star History Chart](https://api.star-history.com/svg?repos=quivrhq/chatbot&type=Timeline)](https://star-history.com/#quivrhq/chatbot&Timeline)
