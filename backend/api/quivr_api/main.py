@@ -27,6 +27,7 @@ from quivr_api.modules.sync.controller import sync_router
 from quivr_api.modules.assistant.controller import assistant_router
 from quivr_api.routes.crawl_routes import crawl_router
 from quivr_api.routes.subscription_routes import subscription_router
+from quivr_api.modules.zalo.controller import zalo_router
 from quivr_api.utils.telemetry import maybe_send_telemetry
 
 load_dotenv()
@@ -82,6 +83,7 @@ app.include_router(subscription_router)
 app.include_router(prompt_router)
 app.include_router(knowledge_router)
 app.include_router(model_router)
+app.include_router(zalo_router)
 
 PROFILING = os.getenv("PROFILING", "false").lower() == "true"
 
