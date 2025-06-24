@@ -38,6 +38,11 @@ class ChatRepository(BaseRepository):
         response = await self.session.exec(query)
         return response.one()
 
+    async def get_chat_by_zalo_user_id(self, zalo_user_id: str):
+        query = select(Chat).where(Chat.zalo_user_id == zalo_user_id)
+        response = await self.session.exec(query)
+        return response.one_or_none()
+
     async def get_chat_history(self, chat_id: UUID) -> Sequence[ChatHistory]:
         query = (
             select(ChatHistory)

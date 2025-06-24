@@ -51,6 +51,19 @@ class ChatService(BaseService[ChatRepository]):
         logger.info(f"Insert response {inserted_chat}")
 
         return inserted_chat
+    
+    async def create_zalo_chat(self, new_chat_data: CreateChatProperties, zalo_user_id: str) -> Chat:
+        # Chat is created upon the user's first question asked
+        logger.info(f"New chat entry in chats table for user {zalo_user_id}")
+        inserted_chat = await self.repository.create_chat(
+            Chat(chat_name=new_chat_data.name, zalo_user_id=zalo_user_id)
+        )
+        logger.info(f"Insert response {inserted_chat}")
+        return inserted_chat
+    
+    
+    async def create_zalo_chat_question(self, chat_id: UUID, question: str) -> Chat | None:
+        return None
 
     def get_follow_up_question(
         self, brain_id: UUID | None = None, question: str | None = None
@@ -80,6 +93,10 @@ class ChatService(BaseService[ChatRepository]):
 
     async def get_chat_by_id(self, chat_id: UUID) -> Chat:
         chat = await self.repository.get_chat_by_id(chat_id)
+        return chat
+
+    async def get_chat_by_zalo_user_id(self, zalo_user_id: str) -> Chat:
+        chat = await self.repository.get_chat_by_zalo_user_id(zalo_user_id)
         return chat
 
     async def get_chat_history(self, chat_id: UUID) -> List[GetChatHistoryOutput]:

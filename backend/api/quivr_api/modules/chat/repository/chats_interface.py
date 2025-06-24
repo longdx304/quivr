@@ -91,3 +91,10 @@ class ChatsInterface(ABC):
         Update chat message
         """
         pass
+
+    @abstractmethod
+    def get_chat_by_zalo_user_id(self, zalo_user_id: str):
+        """
+        Get chat by zalo user id
+        """
+        pass

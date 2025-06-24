@@ -5,4 +5,4 @@ create table
   );
 
 alter table "public"."chats"
-add column "zalo_settings_id" uuid null;
+add column "zalo_user_id" text null;

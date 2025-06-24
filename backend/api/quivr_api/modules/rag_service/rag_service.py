@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 
 from quivr_core.brain import Brain as BrainCore
 from quivr_core.chat import ChatHistory as ChatHistoryCore
-from quivr_core.config import LLMEndpointConfig, RetrievalConfig
+from quivr_core.config import LLMEndpointConfig, RetrievalConfig, RerankerConfig
 from quivr_core.llm.llm_endpoint import LLMEndpoint
 from quivr_core.models import ChatLLMMetadata, ParsedRAGResponse, RAGResponseMetadata
 from quivr_core.quivr_rag_langgraph import QuivrQARAGLangGraph
@@ -40,7 +40,7 @@ logger = get_logger(__name__)
 class RAGService:
     def __init__(
         self,
-        current_user: UserIdentity,
+        current_user: UserIdentity | None,
         chat_id: UUID,
         model_service: ModelService,
         chat_service: ChatService,
@@ -127,6 +127,14 @@ class RAGService:
             raise ValueError(f"Cannot get model {self.model_to_use}")
         api_key = os.getenv(model.env_variable_name, "not-defined")
 
+        # Create reranker configuration
+        reranker_config = RerankerConfig(
+            supplier="cohere",
+            model="rerank-v3.5",
+            top_n=8,
+            api_key=os.getenv("COHERE_API_KEY", "not-defined"),
+        )
+
         # Enhanced retrieval configuration for better quality responses
         retrieval_config = RetrievalConfig(
             llm_config=LLMEndpointConfig(
@@ -138,24 +146,9 @@ class RAGService:
                 max_output_tokens=model.max_output,
             ),
             prompt=self.prompt.content if self.prompt else None,
-            # Enhanced chunking parameters
-            chunk_size=600,  # Increased from 400 for better context
-            chunk_overlap=150,  # Increased overlap for better continuity
-            # Enhanced retrieval parameters
             max_history=8,  # Reduced from 10 to focus on recent relevant context
             max_files=25,  # Increased from 20 for more comprehensive search
-            # Enhanced reranking configuration
-            reranker_config={
-                "supplier": "cohere",
-                "model": "rerank-v3.5",
-                "top_n": 8,  # Increased from 5 for more comprehensive reranking
-                "api_key": os.getenv("COHERE_API_KEY", "not-defined"),
-            },
-            # Quality enhancement flags
-            hybrid_search=True,
-            use_semantic_captions=True,
-            enable_query_expansion=True,
-            context_quality_threshold=0.7,  # Minimum relevance score for chunks
+            reranker_config=reranker_config,
         )
         return retrieval_config
 
@@ -229,9 +222,6 @@ class RAGService:
                 self.brain.brain_id,
                 retrieval_config.llm_config.max_input_tokens
             )
-            # Enable hybrid search if configured
-            if retrieval_config.hybrid_search:
-                vector_store.enable_hybrid_search()
 
         llm = self.get_llm(retrieval_config)
 

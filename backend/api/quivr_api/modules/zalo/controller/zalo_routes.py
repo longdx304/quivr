@@ -1,24 +1,72 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse
+from typing import Annotated
+from quivr_api.modules.chat.service.chat_service import ChatService
+from quivr_api.modules.dependencies import get_service
 from uuid import UUID
 from quivr_api.logger import get_logger
 from quivr_api.middlewares.auth import AuthBearer, get_current_user
 from quivr_api.modules.user.entity.user_identity import UserIdentity
 from quivr_api.modules.zalo.service.zalo_service import ZaloService
+from quivr_api.modules.knowledge.service.knowledge_service import KnowledgeService
+from quivr_api.modules.models.service.model_service import ModelService
+from quivr_api.modules.vector.service.vector_service import VectorService
 
 zalo_router = APIRouter()
 logger = get_logger(__name__)
 zalo_service = ZaloService()
 
-@zalo_router.post("/zalo-webhook")
-async def zalo_webhook(request: Request):
-    data = await request.json()
-    logger.info("Zalo webhook received with data:")
-    logger.info(f"Request data: {data}")
+# UserIdentityDep = Annotated[UserIdentity, Depends(get_current_user)]
+ChatServiceDep = Annotated[ChatService, Depends(get_service(ChatService))]
+KnowledgeServiceDep = Annotated[KnowledgeService, Depends(get_service(KnowledgeService))]
+ModelServiceDep = Annotated[ModelService, Depends(get_service(ModelService))]
+VectorServiceDep = Annotated[VectorService, Depends(get_service(VectorService, False))]
 
-    return {"message": "Zalo webhook received", "data": data}
+@zalo_router.post("/zalo/webhook")
+async def zalo_webhook(
+    request: Request, 
+    chat_service: ChatServiceDep, 
+    knowledge_service: KnowledgeServiceDep, 
+    model_service: ModelServiceDep, 
+    vector_service: VectorServiceDep,
+):
+    try:
+        data = await request.json()
+        # Handle event user send text
+        if data.get("event_name") == "user_send_text":
+            message = data.get("message").get("text")
+            zalo_user_id = data.get("sender").get("id")
+            logger.info(f"Zalo user id: {zalo_user_id}")
+            logger.info(f"Message: {message}")
+            # Check if chat exists
+            chat = await chat_service.get_chat_by_zalo_user_id(zalo_user_id)
+            logger.info(f"Chat: {chat}")
+            if chat is None:
+                # User is new, create a new chat
+                logger.info(f"User is new, creating a new chat")
+                chat = await zalo_service.create_zalo_chat(chat_service, zalo_user_id)
+                logger.info(f"Chat created: {chat}")
+            
+            logger.info(f"Chat already exists for user {zalo_user_id}")
+            # User is not new, update the chat
+            chat_answer = await zalo_service.create_zalo_chat_question(
+                chat.chat_id if chat.chat_id else UUID(int=0), # Provide default UUID if None
+                message,
+                chat_service,
+                knowledge_service,
+                model_service,
+                vector_service
+            )
+            logger.info(f"Chat answer: {chat_answer}")
 
-@zalo_router.post("/zalo-webhook/oa")
+            return {"message": "Zalo webhook received", "data": data, "chat_answer": chat_answer}
+            # assert chat_answer is not None
+            # zalo_service.send_zalo_message(chat_answer)
+    except Exception as e:
+        logger.error(f"Error processing Zalo webhook: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@zalo_router.post("/zalo/webhook/oa")
 async def zalo_webhook_oa(request: Request):
     data = await request.json()
     logger.info("Zalo webhook received with data:")

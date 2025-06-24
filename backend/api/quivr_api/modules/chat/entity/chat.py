@@ -31,6 +31,7 @@ class Chat(SQLModel, table=True):
     user_id: UUID | None = Field(default=None, foreign_key="users.id")
     user: User | None = Relationship(back_populates="chats")  # type: ignore
     chat_history: List["ChatHistory"] | None = Relationship(back_populates="chat")  # type: ignore
+    zalo_user_id: str | None = Field(default=None)  
 
 
 class ChatHistory(AsyncAttrs, SQLModel, table=True):
