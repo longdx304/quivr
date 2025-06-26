@@ -107,8 +107,8 @@ async def check_and_update_user_usage(
     2. Updates user usage
     """
     # TODO(@aminediro) : THIS is bug prone, should retrieve it from DB here
-    user_usage = UserUsage(id=user.id, email=user.email)
-    user_settings = user_usage.get_user_settings()
+    # user_usage = UserUsage(id=user.id, email=user.email)
+    # user_settings = user_usage.get_user_settings()
 
     # Get the model to use
     model = await model_service.get_model(model_name)
@@ -118,5 +118,5 @@ async def check_and_update_user_usage(
         logger.info(f"Model 🔥: {model}")
 
     # Raises HTTP if user usage exceeds limits
-    update_user_usage(user_usage, user_settings, model.price)  # noqa: F821
+    # update_user_usage(user_usage, user_settings, model.price)  # noqa: F821
     return model

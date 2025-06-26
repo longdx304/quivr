@@ -6,7 +6,6 @@ from langchain_core.messages.ai import AIMessageChunk
 from langchain_core.prompts import format_document
 
 from quivr_core.models import (
-    ChatLLMMetadata,
     ParsedRAGResponse,
     QuivrKnowledge,
     RAGResponseMetadata,
@@ -117,32 +116,29 @@ def parse_chunk_response(
 @no_type_check
 def parse_response(raw_response: RawRAGResponse, model_name: str) -> ParsedRAGResponse:
     answer = ""
-    sources = raw_response["docs"] if "docs" in raw_response else []
-
-    metadata = RAGResponseMetadata(
-        sources=sources, metadata_model=ChatLLMMetadata(name=model_name)
-    )
-
+    metadata = {}
     if (
         model_supports_function_calling(model_name)
-        and "tool_calls" in raw_response["answer"]
+        and hasattr(raw_response["answer"], "tool_calls")
         and raw_response["answer"].tool_calls
     ):
         if "citations" in raw_response["answer"].tool_calls[-1]["args"]:
             citations = raw_response["answer"].tool_calls[-1]["args"]["citations"]
-            metadata.citations = citations
+            metadata["citations"] = citations
             followup_questions = raw_response["answer"].tool_calls[-1]["args"][
                 "followup_questions"
             ]
             if followup_questions:
-                metadata.followup_questions = followup_questions
+                metadata["followup_questions"] = followup_questions
             answer = raw_response["answer"].tool_calls[-1]["args"]["answer"]
         else:
             answer = raw_response["answer"].tool_calls[-1]["args"]["answer"]
     else:
         answer = raw_response["answer"].content
-
-    parsed_response = ParsedRAGResponse(answer=answer, metadata=metadata)
+    parsed_response = ParsedRAGResponse(
+        answer=answer,
+        metadata=RAGResponseMetadata(**metadata, metadata_model=None),
+    )
     return parsed_response
 
 

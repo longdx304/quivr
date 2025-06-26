@@ -381,6 +381,7 @@ class QuivrQARAGLangGraph:
             "chat_history": history,
             "files": concat_list_files,
         }
+        logger.info(f"metadata: {metadata}")
         raw_llm_response = conversational_qa_chain.invoke(
             inputs,
             config={"metadata": metadata},

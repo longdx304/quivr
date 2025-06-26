@@ -5,12 +5,14 @@ import { DeleteOrUnsubscribeConfirmationModal } from "@/app/studio/[brainId]/Bra
 import { useBrainFetcher } from "@/app/studio/[brainId]/BrainManagementTabs/hooks/useBrainFetcher";
 import { useBrainManagementTabs } from "@/app/studio/[brainId]/BrainManagementTabs/hooks/useBrainManagementTabs";
 import { getBrainPermissions } from "@/app/studio/[brainId]/BrainManagementTabs/utils/getBrainPermissions";
+import { useZaloApi } from "@/lib/api/zalo/useZaloApi";
 import { Icon } from "@/lib/components/ui/Icon/Icon";
 import { OptionsModal } from "@/lib/components/ui/OptionsModal/OptionsModal";
 import { useBrainContext } from "@/lib/context/BrainProvider/hooks/useBrainContext";
 import { MinimalBrainForUser } from "@/lib/context/BrainProvider/types";
 import { useSearchModalContext } from "@/lib/context/SearchModalProvider/hooks/useSearchModalContext";
 import { useUserSettingsContext } from "@/lib/context/UserSettingsProvider/hooks/useUserSettingsContext";
+import { useToast } from "@/lib/hooks";
 import { Option } from "@/lib/types/Options";
 
 import styles from "./BrainItem.module.scss";
@@ -25,6 +27,7 @@ export const BrainItem = ({ brain, even }: BrainItemProps): JSX.Element => {
 
   const [optionsOpened, setOptionsOpened] = useState<boolean>(false);
   const [optionsHovered, setOptionsHovered] = useState<boolean>(false);
+  const [isZaloIntegrating, setIsZaloIntegrating] = useState<boolean>(false);
 
   const {
     handleUnsubscribeOrDeleteBrain,
@@ -40,6 +43,36 @@ export const BrainItem = ({ brain, even }: BrainItemProps): JSX.Element => {
   const { brain: fetchedBrain } = useBrainFetcher({ brainId: brain.id });
   const { isDarkMode } = useUserSettingsContext();
   const { setIsVisible } = useSearchModalContext();
+  const { integrateBrainWithZalo } = useZaloApi();
+  const { publish } = useToast();
+
+  const handleZaloIntegration = async () => {
+    setIsZaloIntegrating(true);
+    setOptionsOpened(false);
+
+    try {
+      const result = await integrateBrainWithZalo(brain.id);
+      if (result.success) {
+        publish({
+          variant: "success",
+          text: "Brain successfully integrated with Zalo",
+        });
+      } else {
+        publish({
+          variant: "danger",
+          text: result.message || "Failed to integrate with Zalo",
+        });
+      }
+    } catch (error) {
+      console.error("Error integrating with Zalo:", error);
+      publish({
+        variant: "danger",
+        text: "An error occurred while integrating with Zalo",
+      });
+    } finally {
+      setIsZaloIntegrating(false);
+    }
+  };
 
   const iconRef = useRef<HTMLDivElement | null>(null);
   const optionsRef = useRef<HTMLDivElement | null>(null);
@@ -60,6 +93,13 @@ export const BrainItem = ({ brain, even }: BrainItemProps): JSX.Element => {
       },
       iconName: "chat",
       iconColor: "primary",
+    },
+    {
+      label: "Liên kết với Zalo",
+      onClick: () => void handleZaloIntegration(),
+      iconName: "sync",
+      iconColor: "primary",
+      disabled: isZaloIntegrating,
     },
     {
       label: t("deleteButton", { ns: "brain" }),
