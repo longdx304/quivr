@@ -1,4 +1,5 @@
 import os
+import requests
 from uuid import UUID
 from typing import Optional
 from quivr_api.modules.chat.controller.chat.utils import RetrievalConfigPathEnv, get_config_file_path, load_and_merge_retrieval_configuration
@@ -30,36 +31,12 @@ class ZaloService:
         Update or create Zalo integration for a specific brain
         """
         try:
-            # Check if record exists
-            existing_record = (
+            response = (
                 self.db.table("zalo_settings")
-                .select("*")
-                .eq("zalo_brain_id", str(brain_id))
+                .update({"value": str(brain_id)})
+                .eq("key", "zalo_brain_id")
                 .execute()
             )
-
-            data = {
-                "zalo_brain_id": str(brain_id),
-                "zalo_app_refresh_token": refresh_token,
-            }
-
-            if existing_record.data:
-                # Update existing record
-                response = (
-                    self.db.table("zalo_settings")
-                    .update(data)
-                    .eq("zalo_brain_id", str(brain_id))
-                    .execute()
-                )
-                logger.info(f"Updated Zalo integration for brain {brain_id}")
-            else:
-                # Create new record
-                response = (
-                    self.db.table("zalo_settings")
-                    .insert(data)
-                    .execute()
-                )
-                logger.info(f"Created Zalo integration for brain {brain_id}")
 
             return {
                 "success": True,
@@ -83,7 +60,7 @@ class ZaloService:
             response = (
                 self.db.table("zalo_settings")
                 .select("*")
-                .eq("zalo_brain_id", str(brain_id))
+                .eq("key", "zalo_brain_id")
                 .execute()
             )
 
@@ -98,21 +75,33 @@ class ZaloService:
     async def get_zalo_brain_id(self) -> Optional[str]:
         response = (
             self.db.table("zalo_settings")
-            .select("*")
+            .select("value")
+            .eq("key", "zalo_brain_id")
             .execute()
 
         )
-        return response.data[0].get("zalo_brain_id")
+        return response.data[0].get("value") if response.data else None
+
+    async def get_zalo_refresh_token(self) -> Optional[str]:
+        response = (
+            self.db.table("zalo_settings")
+            .select("value")
+            .eq("key", "zalo_app_refresh_token")
+            .execute()
+        )
+        return response.data[0].get("value") if response.data else None
 
     def remove_zalo_brain_integration(self, brain_id: UUID) -> dict:
         """
         Remove Zalo integration for a specific brain
         """
         try:
+            brain = self.get_zalo_brain_integration(brain_id)
+            assert brain is not None
             response = (
                 self.db.table("zalo_settings")
-                .delete()
-                .eq("zalo_brain_id", str(brain_id))
+                .update({"value": None})
+                .eq("key", "zalo_brain_id")
                 .execute()
             )
 
@@ -153,11 +142,12 @@ class ZaloService:
         assert model is not None
         current_path = os.path.dirname(os.path.abspath(__file__))
         file_path = get_config_file_path(
-                RetrievalConfigPathEnv.CHAT_WITH_LLM, current_path=current_path
+                RetrievalConfigPathEnv.RAG, current_path=current_path
             )
         retrieval_config = load_and_merge_retrieval_configuration(
                 config_file_path=file_path, sqlmodel=model
             )
+        logger.info(f"Brain service")
         service = RAGService(
                 current_user=None,
                 chat_id=chat_id,
@@ -170,6 +160,201 @@ class ZaloService:
                 knowledge_service=knowledge_service,
                 vector_service=vector_service,
             )
+        logger.info(f"Service created")
         chat_answer = await service.generate_answer(message)
         logger.info(f"Chat answer: {chat_answer}")
         return chat_answer
+
+    async def update_zalo_refresh_token(self, refresh_token: str) -> dict:
+        """
+        Update Zalo refresh token
+        """
+        try:
+            response = (
+                self.db.table("zalo_settings")
+                .update({"value": str(refresh_token)})
+                .eq("key", "zalo_app_refresh_token")
+                .execute()
+            )
+            return {
+                "success": True,
+                "message": "Zalo refresh token updated successfully",
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Failed to update Zalo refresh token: {str(e)}",
+            }
+    
+    async def get_zalo_token(self, code: str) -> dict:
+        """
+        Get Zalo access token using Zalo OAuth API
+        """
+        try:
+            # Get app_id and secret_key from environment variables
+            app_id = os.getenv("ZALO_APP_ID")
+            secret_key = os.getenv("ZALO_SECRET_KEY")
+            logger.info(f"App id: {app_id}")
+            logger.info(f"Secret key: {secret_key}")
+            
+            if not app_id or not secret_key:
+                return {
+                    "success": False,
+                    "message": "ZALO_APP_ID or ZALO_SECRET_KEY environment variables not set",
+                }
+
+            # Prepare headers according to Zalo API requirements
+            headers = {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "secret_key": secret_key,
+            }
+
+            # Prepare data payload
+            data = {
+                "code": code,
+                "app_id": app_id,
+                "grant_type": "authorization_code",
+            }
+
+            # Make request to Zalo OAuth API
+            response = requests.post(
+                "https://oauth.zaloapp.com/v4/oa/access_token",
+                headers=headers,
+                data=data,
+            )
+
+            # Check if request was successful
+            if response.status_code == 200:
+                response_data = response.json()
+                
+                return {
+                    "success": True,
+                    "data": response_data,
+                }
+            else:
+                logger.error(f"Zalo API error: {response.status_code} - {response.text}")
+                return {
+                    "success": False,
+                    "message": f"Zalo API error: {response.status_code} - {response.text}",
+                }
+
+        except Exception as e:
+            logger.error(f"Error getting Zalo access token: {e}")
+            return {
+                "success": False,
+                "message": f"Failed to get Zalo access token: {str(e)}",
+            }
+
+    async def get_zalo_access_token(self, refresh_token: str) -> dict:
+        """
+        Get Zalo access token
+        """
+        try:
+            # Get app_id and secret_key from environment variables
+            app_id = os.getenv("ZALO_APP_ID")
+            logger.info(f"App id: {app_id}")
+            secret_key = os.getenv("ZALO_SECRET_KEY")
+            logger.info(f"Secret key: {secret_key}")
+            
+            if not app_id or not secret_key:
+                logger.error("ZALO_APP_ID or ZALO_SECRET_KEY environment variables not set")
+                return {
+                    "success": False,
+                    "message": "ZALO_APP_ID or ZALO_SECRET_KEY environment variables not set", 
+                }
+
+            # Prepare headers according to Zalo API requirements
+            headers = {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "secret_key": secret_key,
+            }
+
+            # Prepare data payload
+            data = {
+                "refresh_token": refresh_token,
+                "app_id": app_id,
+                "grant_type": "refresh_token",
+            }
+
+            # Make request to Zalo OAuth API
+            response = requests.post(
+                "https://oauth.zaloapp.com/v4/oa/access_token",
+                headers=headers,
+                data=data,
+            )
+
+            # Check if request was successful
+            if response.status_code == 200:
+                response_data = response.json()
+                await self.update_zalo_refresh_token(response_data["refresh_token"])
+                return {
+                    "success": True,
+                    "access_token": response_data["access_token"],
+                }
+            else:
+                logger.error(f"Zalo API error: {response.status_code} - {response.text}")
+                return {
+                    "success": False,
+                    "message": f"Zalo API error: {response.status_code} - {response.text}",
+                }
+
+        except Exception as e:
+            logger.error(f"Error getting Zalo access token: {e}")
+            return {
+                "success": False,
+                "message": f"Failed to get Zalo access token: {str(e)}",
+            }
+
+    async def send_zalo_message(self, user_id: str, message: str) -> dict:
+        """
+        Send Zalo message
+        """
+        refresh_token = await self.get_zalo_refresh_token()
+        logger.info(f"Refresh token: {refresh_token}")
+        if refresh_token is None:
+            logger.error("Refresh token not found")
+            return {
+                "success": False,
+                "message": "Refresh token not found",
+            }
+        token = await self.get_zalo_access_token(refresh_token)
+        logger.info(f"Access token: {token}")
+        if not token["success"]:
+            logger.error(f"Failed to get Zalo access token: {token['message']}")
+            return {
+                "success": False,
+                "message": token["message"],
+            }
+        access_token = token["access_token"]
+        headers = {
+            "Content-Type": "application/json",
+            "access_token": access_token,
+        }
+
+        data = {
+            "recipient": {
+                "user_id": user_id,
+            },
+            "message": {"text": message},
+        }
+        response = requests.post(
+            "https://openapi.zalo.me/v3.0/oa/message/cs",
+            headers=headers,
+            json=data,
+        )
+        logger.info(f"Response: {response.json()}")
+
+        if response.status_code == 200:
+            logger.info(f"Zalo message sent successfully: {response.json()}")
+            return {
+                "success": True,
+                "message": "Zalo message sent successfully",
+                "data": response.json(),
+            }
+        else:
+            logger.error(f"Zalo API error: {response.status_code} - {response.text}")
+            logger.error(f"Zalo API error: {response.json()}")
+            return {
+                "success": False,
+                "message": f"Zalo API error: {response.status_code} - {response.text}",
+            }

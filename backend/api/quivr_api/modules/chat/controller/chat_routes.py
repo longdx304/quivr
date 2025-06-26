@@ -4,7 +4,6 @@ from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
-from quivr_core.config import RetrievalConfig
 
 from quivr_api.logger import get_logger
 from quivr_api.middlewares.auth import AuthBearer, get_current_user
@@ -183,34 +182,40 @@ async def create_question_handler(
     brain_id: Annotated[UUID | None, Query()] = None,
 ):
     models = await model_service.get_models()
-
+ 
     model_to_use = None
     # Check if the brain_id is a model name hashed to a uuid and then returns the model name
-    # if chat_question.brain_id in [generate_uuid_from_string(model.name) for model in models]:
-    #     mode
     for model in models:
         if brain_id == generate_uuid_from_string(model.name):
             model_to_use = model
             _brain = {"brain_id": brain_id, "name": model.name}
             brain = BrainEntity(**_brain)
             break
-
+ 
     try:
-        if not model_to_use:
-            brain = brain_service.get_brain_details(brain_id, current_user.id)  # type: ignore
-            assert brain
+        if model_to_use is None:
+            logger.info(f"11-----")
+            assert brain_id
+            brain = brain_service.get_brain_details(brain_id, current_user.id)
+            assert brain is not None
             model = await check_and_update_user_usage(
                 current_user, str(brain.model), model_service
-            )  # type: ignore
-            assert model is not None  # type: ignore
-            assert brain is not None  # type: ignore
-
+            )
+            assert model is not None
             brain.model = model.name
             validate_authorization(user_id=current_user.id, brain_id=brain_id)
+            current_path = os.path.dirname(os.path.abspath(__file__))
+            file_path = get_config_file_path(
+                RetrievalConfigPathEnv.RAG, current_path=current_path
+            )
+            retrieval_config = load_and_merge_retrieval_configuration(
+                config_file_path=file_path, sqlmodel=model
+            )
             service = RAGService(
                 current_user=current_user,
                 chat_id=chat_id,
                 brain=brain,
+                retrieval_config=retrieval_config,
                 model_service=model_service,
                 brain_service=brain_service,
                 prompt_service=prompt_service,
@@ -219,14 +224,17 @@ async def create_question_handler(
                 vector_service=vector_service,
             )
         else:
+            logger.info(f"22-----")
             await check_and_update_user_usage(
                 current_user, model_to_use.name, model_service
-            )  # type: ignore
-            if not os.getenv("CHAT_LLM_CONFIG_PATH"):
-                raise ValueError("CHAT_LLM_CONFIG_PATH not set")
+            )
             current_path = os.path.dirname(os.path.abspath(__file__))
-            file_path = os.path.join(current_path, os.getenv("CHAT_LLM_CONFIG_PATH"))  # type: ignore
-            retrieval_config = RetrievalConfig.from_yaml(file_path)
+            file_path = get_config_file_path(
+                RetrievalConfigPathEnv.CHAT_WITH_LLM, current_path=current_path
+            )
+            retrieval_config = load_and_merge_retrieval_configuration(
+                config_file_path=file_path, sqlmodel=model_to_use
+            )
             service = RAGService(
                 current_user=current_user,
                 chat_id=chat_id,
@@ -234,13 +242,13 @@ async def create_question_handler(
                 retrieval_config=retrieval_config,
                 model_service=model_service,
                 chat_service=chat_service,
-            )  # type: ignore
-        assert service is not None  # type: ignore
+            )
+        assert service is not None
         maybe_send_telemetry("question_asked", {"streaming": True}, request)
         chat_answer = await service.generate_answer(chat_question.question)
-
+        logger.info(f"chat_answer: {chat_answer}")
         return chat_answer
-
+    
     except AssertionError:
         raise HTTPException(
             status_code=422,
@@ -289,6 +297,7 @@ async def create_stream_question_handler(
             break
     try:
         if model_to_use is None:
+            logger.info(f"11-----")
             assert brain_id
             brain = brain_service.get_brain_details(brain_id, current_user.id)
             assert brain is not None
@@ -318,6 +327,7 @@ async def create_stream_question_handler(
                 vector_service=vector_service,
             )
         else:
+            logger.info(f"22-----")
             await check_and_update_user_usage(
                 current_user, model_to_use.name, model_service
             )  # type: ignore
@@ -340,7 +350,6 @@ async def create_stream_question_handler(
         background_tasks.add_task(
             maybe_send_telemetry, "question_asked", {"streaming": True}, request
         )
-
         return StreamingResponse(
             service.generate_answer_stream(chat_question.question),
             media_type="text/event-stream",

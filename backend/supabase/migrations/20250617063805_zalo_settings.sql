@@ -1,8 +1,5 @@
-create table
-  "public"."zalo_settings" (
-    "zalo_app_refresh_token" text null,
-    "zalo_brain_id" text null
-  );
+CREATE TABLE
+  IF NOT EXISTS zalo_settings ("key" TEXT PRIMARY KEY, "value" TEXT);
 
 alter table "public"."chats"
 add column "zalo_user_id" text null;

@@ -6,7 +6,11 @@ export const integrateBrainWithZalo = async (
 ): Promise<{ success: boolean; message: string; brain_id: string }> => {
   const response = await axiosInstance.post(`/zalo/integrate-brain/${brainId}`);
 
-  return response.data;
+  return response.data as {
+    success: boolean;
+    message: string;
+    brain_id: string;
+  };
 };
 
 export const getBrainZaloIntegration = async (
@@ -14,14 +18,14 @@ export const getBrainZaloIntegration = async (
   axiosInstance: AxiosInstance
 ): Promise<{
   brain_id: string;
-  integrated: boolean;
-  integration_data: any;
 }> => {
   const response = await axiosInstance.get(
     `/zalo/brain-integration/${brainId}`
   );
 
-  return response.data;
+  return response.data as {
+    brain_id: string;
+  };
 };
 
 export const removeBrainZaloIntegration = async (
@@ -32,5 +36,9 @@ export const removeBrainZaloIntegration = async (
     `/zalo/integrate-brain/${brainId}`
   );
 
-  return response.data;
+  return response.data as {
+    success: boolean;
+    message: string;
+    brain_id: string;
+  };
 };

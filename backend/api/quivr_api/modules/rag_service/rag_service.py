@@ -247,11 +247,9 @@ class RAGService:
 
         # Combine and verify responses
         final_response = self._combine_and_verify_responses(responses)
-
         # Save the answer to db
         if self.brain_service:
             new_chat_entry = self.save_answer(question, final_response)
-
         # Format output to be correct
         metadata = (
             final_response.metadata.model_dump() if final_response.metadata else {}
@@ -310,7 +308,6 @@ class RAGService:
             if self.vector_service
             else None
         )
-
         llm = self.get_llm(retrieval_config)
 
         if self.prompt:
@@ -353,7 +350,6 @@ class RAGService:
                 brain_id=str(generate_uuid_from_string(self.brain.name)),
                 brain_name=self.model_to_use,
             )
-
         async for response in brain_core.ask_streaming(
             question=question,
             retrieval_config=retrieval_config,
@@ -381,7 +377,6 @@ class RAGService:
                         )
                 full_answer += response.answer
                 yield f"data: {streamed_chat_history.model_dump_json()}"
-
         # For last chunk  parse the sources, and the full answer
         streamed_chat_history = GetChatHistoryOutput(
             assistant=response.answer,
@@ -416,7 +411,6 @@ class RAGService:
 
         if streamed_chat_history.metadata:
             streamed_chat_history.metadata["sources"] = sources_urls
-
         self.save_answer(
             question,
             ParsedRAGResponse(

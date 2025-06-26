@@ -733,6 +733,15 @@ VALUES
 	);
 
 --
+-- Data for Name: zalo_settings; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+INSERT INTO
+	"public"."zalo_settings" ("key", "value")
+VALUES
+	('zalo_brain_id', NULL),
+	('zalo_app_refresh_token', NULL);
+
+--
 -- Name: refresh_tokens_id_seq; Type: SEQUENCE SET; Schema: auth; Owner: supabase_auth_admin
 --
 SELECT

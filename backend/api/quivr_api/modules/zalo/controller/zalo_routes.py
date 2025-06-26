@@ -32,6 +32,7 @@ async def zalo_webhook(
 ):
     try:
         data = await request.json()
+        logger.info(f"Zalo webhook received with data: {data}")
         # Handle event user send text
         if data.get("event_name") == "user_send_text":
             message = data.get("message").get("text")
@@ -40,12 +41,10 @@ async def zalo_webhook(
             logger.info(f"Message: {message}")
             # Check if chat exists
             chat = await chat_service.get_chat_by_zalo_user_id(zalo_user_id)
-            logger.info(f"Chat: {chat}")
             if chat is None:
                 # User is new, create a new chat
                 logger.info(f"User is new, creating a new chat")
                 chat = await zalo_service.create_zalo_chat(chat_service, zalo_user_id)
-                logger.info(f"Chat created: {chat}")
             
             logger.info(f"Chat already exists for user {zalo_user_id}")
             # User is not new, update the chat
@@ -59,21 +58,48 @@ async def zalo_webhook(
             )
             logger.info(f"Chat answer: {chat_answer}")
 
-            return {"message": "Zalo webhook received", "data": data, "chat_answer": chat_answer}
-            # assert chat_answer is not None
-            # zalo_service.send_zalo_message(chat_answer)
+        # assert chat_answer is not None
+        # await zalo_service.send_zalo_message(data.get("sender").get("id"), "Tôi là bot")
+        return {"message": "Zalo webhook received", "data": data, "chat_answer": chat_answer}
     except Exception as e:
         logger.error(f"Error processing Zalo webhook: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-@zalo_router.post("/zalo/webhook/oa")
-async def zalo_webhook_oa(request: Request):
-    data = await request.json()
-    logger.info("Zalo webhook received with data:")
-    logger.info(f"Request data: {data}")
-    return {"message": "Zalo webhook oa", "data": data}
+@zalo_router.get("/zalo/webhook/oa")
+async def zalo_oauth_callback(request: Request):
+    """
+    Handle Zalo OAuth callback
+    """
+    try:
+        # Get query parameters
+        query_params = dict(request.query_params)
+        oa_id = query_params.get("oa_id")
+        code = query_params.get("code")
+        
+        logger.info(f"Zalo OAuth callback received")
+        logger.info(f"OA ID: {oa_id}")
+        logger.info(f"Authorization code: {code}")
+        logger.info(f"All query params: {query_params}")
+        
+        token = await zalo_service.get_zalo_token(str(code))
+        logger.info(f"Zalo access token: {token}")
+        if not token["success"]:
+            raise HTTPException(status_code=500, detail=token["message"])
+        # Update Zalo refresh token
+        await zalo_service.update_zalo_refresh_token(token["data"]["refresh_token"])
+        
+        return {
+            "message": "Zalo OAuth callback received successfully",
+            "oa_id": oa_id,
+            "code_received": bool(code),
+            "status": "success"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error processing Zalo OAuth callback: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-@zalo_router.get("/zalo_verifierIzkT0g7t6Y1LWhyVYBO5Ht-vrH2JpmD9CZ4v.html", response_class=HTMLResponse)
+@zalo_router.get("/zalo_verifierNlEcEDo6SpGXikCDsC9FD27zt2BDYmzuDp0s.html", response_class=HTMLResponse)
 async def zalo_verification():
     """
     Zalo platform site verification endpoint.
@@ -85,7 +111,7 @@ async def zalo_verification():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta property="zalo-platform-site-verification" content="IzkT0g7t6Y1LWhyVYBO5Ht-vrH2JpmD9CZ4v" />
+        <meta property="zalo-platform-site-verification" content="NlEcEDo6SpGXikCDsC9FD27zt2BDYmzuDp0s" />
         <title>Zalo Platform Verification</title>
     </head>
     <body>
