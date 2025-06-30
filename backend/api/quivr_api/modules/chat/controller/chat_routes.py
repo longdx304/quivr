@@ -182,7 +182,7 @@ async def create_question_handler(
     brain_id: Annotated[UUID | None, Query()] = None,
 ):
     models = await model_service.get_models()
- 
+
     model_to_use = None
     # Check if the brain_id is a model name hashed to a uuid and then returns the model name
     for model in models:
@@ -194,7 +194,6 @@ async def create_question_handler(
  
     try:
         if model_to_use is None:
-            logger.info(f"11-----")
             assert brain_id
             brain = brain_service.get_brain_details(brain_id, current_user.id)
             assert brain is not None
@@ -224,7 +223,6 @@ async def create_question_handler(
                 vector_service=vector_service,
             )
         else:
-            logger.info(f"22-----")
             await check_and_update_user_usage(
                 current_user, model_to_use.name, model_service
             )
@@ -245,7 +243,8 @@ async def create_question_handler(
             )
         assert service is not None
         maybe_send_telemetry("question_asked", {"streaming": True}, request)
-        chat_answer = await service.generate_answer(chat_question.question)
+        payloadMetadata = {"sub_user_id": chat_question.sub_user_id}
+        chat_answer = await service.generate_answer(chat_question.question, payloadMetadata)
         logger.info(f"chat_answer: {chat_answer}")
         return chat_answer
     
@@ -297,7 +296,6 @@ async def create_stream_question_handler(
             break
     try:
         if model_to_use is None:
-            logger.info(f"11-----")
             assert brain_id
             brain = brain_service.get_brain_details(brain_id, current_user.id)
             assert brain is not None
@@ -327,7 +325,6 @@ async def create_stream_question_handler(
                 vector_service=vector_service,
             )
         else:
-            logger.info(f"22-----")
             await check_and_update_user_usage(
                 current_user, model_to_use.name, model_service
             )  # type: ignore
@@ -350,8 +347,9 @@ async def create_stream_question_handler(
         background_tasks.add_task(
             maybe_send_telemetry, "question_asked", {"streaming": True}, request
         )
+        payloadMetadata = {"sub_user_id": chat_question.sub_user_id}
         return StreamingResponse(
-            service.generate_answer_stream(chat_question.question),
+            service.generate_answer_stream(chat_question.question, payloadMetadata),
             media_type="text/event-stream",
         )
 

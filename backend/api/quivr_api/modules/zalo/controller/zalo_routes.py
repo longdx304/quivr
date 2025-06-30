@@ -33,6 +33,9 @@ async def zalo_webhook(
     try:
         data = await request.json()
         logger.info(f"Zalo webhook received with data: {data}")
+        message_id = data.get("message").get("msg_id")
+        if message_id == 'This is message id':
+            return {"message": "Zalo webhook received", "data": data}
         # Handle event user send text
         if data.get("event_name") == "user_send_text":
             message = data.get("message").get("text")
@@ -57,9 +60,9 @@ async def zalo_webhook(
                 vector_service
             )
             logger.info(f"Chat answer: {chat_answer}")
+            assert chat_answer is not None
+            await zalo_service.send_zalo_message(data.get("sender").get("id"), chat_answer.assistant)
 
-        # assert chat_answer is not None
-        # await zalo_service.send_zalo_message(data.get("sender").get("id"), "Tôi là bot")
         return {"message": "Zalo webhook received", "data": data, "chat_answer": chat_answer}
     except Exception as e:
         logger.error(f"Error processing Zalo webhook: {e}")

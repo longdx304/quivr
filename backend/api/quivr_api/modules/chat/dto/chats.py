@@ -26,6 +26,7 @@ class ChatQuestion(BaseModel):
     max_tokens: Optional[int] = None
     brain_id: Optional[UUID] = None
     prompt_id: Optional[UUID] = None
+    sub_user_id: Optional[str] = None
 
 
 class Sources(BaseModel):
