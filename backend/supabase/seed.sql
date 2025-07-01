@@ -51,105 +51,105 @@ VALUES
 	(
 		'00000000-0000-0000-0000-000000000000',
 		'84e89c28-6f5f-4e24-a03b-68cdaa90b3f2',
-		'{"action":"user_signedup","actor_id":"00000000-0000-0000-0000-000000000000","actor_username":"service_role","actor_via_sso":false,"log_type":"team","traits":{"user_email":"admin@traphaco.com","user_id":"39418e3b-0258-4452-af60-7acfcc1263ff","user_phone":""}}',
+		'{"action":"user_signedup","actor_id":"00000000-0000-0000-0000-000000000000","actor_username":"service_role","actor_via_sso":false,"log_type":"team","traits":{"user_email":"admin@medzavy.com","user_id":"39418e3b-0258-4452-af60-7acfcc1263ff","user_phone":""}}',
 		'2024-01-22 22:27:00.164777+00',
 		''
 	),
 	(
 		'00000000-0000-0000-0000-000000000000',
 		'ac1d43e6-2b2a-4af1-bdd1-c03907e7ba5a',
-		'{"action":"login","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@traphaco.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}}',
+		'{"action":"login","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@medzavy.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}}',
 		'2024-01-22 22:27:50.16388+00',
 		''
 	),
 	(
 		'00000000-0000-0000-0000-000000000000',
 		'e86de23b-ea26-408e-8e8c-a97d2f1f259c',
-		'{"action":"login","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@traphaco.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}}',
+		'{"action":"login","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@medzavy.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}}',
 		'2024-02-06 04:08:08.378325+00',
 		''
 	),
 	(
 		'00000000-0000-0000-0000-000000000000',
 		'a356df58-6d1b-45dd-ae13-08ea7b7a0aff',
-		'{"action":"login","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@traphaco.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}}',
+		'{"action":"login","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@medzavy.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}}',
 		'2024-02-21 02:17:19.558786+00',
 		''
 	),
 	(
 		'00000000-0000-0000-0000-000000000000',
 		'8a1ff5f6-5426-4f4b-94ac-d780f6308a8d',
-		'{"action":"logout","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@traphaco.com","actor_via_sso":false,"log_type":"account"}',
+		'{"action":"logout","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@medzavy.com","actor_via_sso":false,"log_type":"account"}',
 		'2024-03-05 16:11:51.53268+00',
 		''
 	),
 	(
 		'00000000-0000-0000-0000-000000000000',
 		'798fde42-d617-4dfd-bf0c-4a6e15dbadbf',
-		'{"action":"login","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@traphaco.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}}',
+		'{"action":"login","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@medzavy.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}}',
 		'2024-03-05 16:12:06.445094+00',
 		''
 	),
 	(
 		'00000000-0000-0000-0000-000000000000',
 		'73331e6e-2e66-4db6-816b-980ce65a2481',
-		'{"action":"user_recovery_requested","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@traphaco.com","actor_via_sso":false,"log_type":"user"}',
+		'{"action":"user_recovery_requested","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@medzavy.com","actor_via_sso":false,"log_type":"user"}',
 		'2024-03-05 16:22:13.777822+00',
 		''
 	),
 	(
 		'00000000-0000-0000-0000-000000000000',
 		'dcdc846a-7194-4ee4-869e-0c05c269bd75',
-		'{"action":"login","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@traphaco.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}}',
+		'{"action":"login","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@medzavy.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}}',
 		'2024-03-30 23:21:12.07649+00',
 		''
 	),
 	(
 		'00000000-0000-0000-0000-000000000000',
 		'3cb1aa8a-bbcf-4871-b9f1-ae3c8a1e7897',
-		'{"action":"token_refreshed","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@traphaco.com","actor_via_sso":false,"log_type":"token"}',
+		'{"action":"token_refreshed","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@medzavy.com","actor_via_sso":false,"log_type":"token"}',
 		'2024-03-31 00:39:12.712906+00',
 		''
 	),
 	(
 		'00000000-0000-0000-0000-000000000000',
 		'b742a419-21c6-4a89-b966-5fcb44d74ce6',
-		'{"action":"token_revoked","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@traphaco.com","actor_via_sso":false,"log_type":"token"}',
+		'{"action":"token_revoked","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@medzavy.com","actor_via_sso":false,"log_type":"token"}',
 		'2024-03-31 00:39:12.714476+00',
 		''
 	),
 	(
 		'00000000-0000-0000-0000-000000000000',
 		'7f37fc2f-4122-4b7d-9be5-8e0e5c217d1b',
-		'{"action":"token_refreshed","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@traphaco.com","actor_via_sso":false,"log_type":"token"}',
+		'{"action":"token_refreshed","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@medzavy.com","actor_via_sso":false,"log_type":"token"}',
 		'2024-03-31 00:39:12.750952+00',
 		''
 	),
 	(
 		'00000000-0000-0000-0000-000000000000',
 		'3a20a51b-0b9b-4fd2-88bb-baf0bd0256e7',
-		'{"action":"token_revoked","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@traphaco.com","actor_via_sso":false,"log_type":"token"}',
+		'{"action":"token_revoked","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@medzavy.com","actor_via_sso":false,"log_type":"token"}',
 		'2024-03-31 00:39:12.751734+00',
 		''
 	),
 	(
 		'00000000-0000-0000-0000-000000000000',
 		'7abd9db8-feaa-4286-91ce-f83f26e6248f',
-		'{"action":"token_refreshed","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@traphaco.com","actor_via_sso":false,"log_type":"token"}',
+		'{"action":"token_refreshed","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@medzavy.com","actor_via_sso":false,"log_type":"token"}',
 		'2024-04-01 17:40:15.324815+00',
 		''
 	),
 	(
 		'00000000-0000-0000-0000-000000000000',
 		'60cbbae4-8f7d-424a-bff9-52f36a3cec18',
-		'{"action":"token_revoked","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@traphaco.com","actor_via_sso":false,"log_type":"token"}',
+		'{"action":"token_revoked","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@medzavy.com","actor_via_sso":false,"log_type":"token"}',
 		'2024-04-01 17:40:15.327436+00',
 		''
 	),
 	(
 		'00000000-0000-0000-0000-000000000000',
 		'8fa8d8cc-069a-4937-9381-f4e0c2014cee',
-		'{"action":"token_refreshed","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@traphaco.com","actor_via_sso":false,"log_type":"token"}',
+		'{"action":"token_refreshed","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@medzavy.com","actor_via_sso":false,"log_type":"token"}',
 		'2024-04-01 17:40:29.606995+00',
 		''
 	),
@@ -163,7 +163,7 @@ VALUES
 	(
 		'00000000-0000-0000-0000-000000000000',
 		'9996a09d-f340-4d8a-8121-1c61678a0035',
-		'{"action":"logout","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@traphaco.com","actor_via_sso":false,"log_type":"account"}',
+		'{"action":"logout","actor_id":"39418e3b-0258-4452-af60-7acfcc1263ff","actor_username":"admin@medzavy.com","actor_via_sso":false,"log_type":"account"}',
 		'2024-04-01 18:33:27.294395+00',
 		''
 	),
@@ -293,7 +293,7 @@ VALUES
 		'39418e3b-0258-4452-af60-7acfcc1263ff',
 		'authenticated',
 		'authenticated',
-		'admin@traphaco.com',
+		'admin@medzavy.com',
 		'$2a$10$vwKX0eMLlrOZvxQEA3Vl4e5V4/hOuxPjGYn9QK1yqeaZxa.42Uhze',
 		'2024-01-22 22:27:00.166861+00',
 		NULL,
@@ -342,7 +342,7 @@ VALUES
 	(
 		'39418e3b-0258-4452-af60-7acfcc1263ff',
 		'39418e3b-0258-4452-af60-7acfcc1263ff',
-		'{"sub": "39418e3b-0258-4452-af60-7acfcc1263ff", "email": "admin@traphaco.com", "email_verified": false, "phone_verified": false}',
+		'{"sub": "39418e3b-0258-4452-af60-7acfcc1263ff", "email": "admin@medzavy.com", "email_verified": false, "phone_verified": false}',
 		'email',
 		'2024-01-22 22:27:00.163787+00',
 		'2024-01-22 22:27:00.163855+00',
@@ -573,7 +573,7 @@ INSERT INTO
 VALUES
 	(
 		'39418e3b-0258-4452-af60-7acfcc1263ff',
-		'admin@traphaco.com',
+		'admin@medzavy.com',
 		false
 	);
 
@@ -679,7 +679,7 @@ INSERT INTO
 VALUES
 	(
 		'39418e3b-0258-4452-af60-7acfcc1263ff',
-		'admin@traphaco.com',
+		'admin@medzavy.com',
 		'20240808',
 		3
 	);

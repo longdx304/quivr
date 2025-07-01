@@ -26,7 +26,7 @@ async def test_data(
 ) -> TestData:
     # User data
     user_1 = (
-        await session.exec(select(User).where(User.email == "admin@traphaco.com"))
+        await session.exec(select(User).where(User.email == "admin@medzavy.com"))
     ).one()
     # Brain data
     brain_1 = Brain(

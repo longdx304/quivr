@@ -33,7 +33,7 @@ async def other_user(session: AsyncSession):
 @pytest_asyncio.fixture(scope="function")
 async def user(session):
     user_1 = (
-        await session.exec(select(User).where(User.email == "admin@traphaco.com"))
+        await session.exec(select(User).where(User.email == "admin@medzavy.com"))
     ).one()
     return user_1
 

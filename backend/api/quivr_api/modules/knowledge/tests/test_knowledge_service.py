@@ -48,7 +48,7 @@ async def other_user(session: AsyncSession):
 @pytest_asyncio.fixture(scope="function")
 async def user(session: AsyncSession) -> User:
     user_1 = (
-        await session.exec(select(User).where(User.email == "admin@traphaco.com"))
+        await session.exec(select(User).where(User.email == "admin@medzavy.com"))
     ).one()
     assert user_1.id
     return user_1
@@ -57,7 +57,7 @@ async def user(session: AsyncSession) -> User:
 @pytest_asyncio.fixture(scope="function")
 async def test_data(session: AsyncSession) -> TestData:
     user_1 = (
-        await session.exec(select(User).where(User.email == "admin@traphaco.com"))
+        await session.exec(select(User).where(User.email == "admin@medzavy.com"))
     ).one()
     assert user_1.id
     # Brain data
