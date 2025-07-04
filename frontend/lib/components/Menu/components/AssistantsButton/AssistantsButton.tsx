@@ -10,11 +10,11 @@ export const AssistantsButton = (): JSX.Element => {
   return (
     <Link href={`/assistants`}>
       <MenuButton
-        label='Traphaco.AI Assistants'
+        label="Medzavy.AI Assistants"
         isSelected={isSelected}
-        iconName='assistant'
-        type='open'
-        color='primary'
+        iconName="assistant"
+        type="open"
+        color="primary"
       />
     </Link>
   );

@@ -28,7 +28,7 @@ export const PublicPromptsList = ({
   return (
     <SingleSelector
       options={formattedOptions}
-      iconName='brain'
+      iconName="brain"
       selectedOption={
         selectedOption
           ? {
@@ -37,7 +37,7 @@ export const PublicPromptsList = ({
             }
           : undefined
       }
-      placeholder='Select a Traphaco.AI prompt'
+      placeholder="Select a Medzavy.AI prompt"
       onChange={(clickedOption) => {
         const findedOption = options.find(
           (option) => option.id === clickedOption

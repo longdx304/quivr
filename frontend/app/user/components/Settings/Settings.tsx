@@ -44,7 +44,7 @@ export const Settings = ({
             </div>
           </InfoSection>
         )}
-        <InfoSection iconName="key" title="Traphaco.AI API Key">
+        <InfoSection iconName="key" title="Medzavy.AI API Key">
           <div className={styles.text_and_button}>
             <span className={styles.text}>
               {t("api_key_is_unique_identifier", { ns: "translation" })}
@@ -54,7 +54,7 @@ export const Settings = ({
                 rel="noopener noreferrer"
                 className={styles.link}
               >
-                Traphaco.AI&apos;s API.
+                Medzavy.AI&apos;s API.
               </a>
             </span>
             <div className={styles.button}>

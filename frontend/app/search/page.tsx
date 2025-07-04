@@ -107,7 +107,7 @@ const Search = (): JSX.Element => {
     <div className={styles.main_container}>
       <div className={styles.page_header}>
         <PageHeader
-          iconName='home'
+          iconName="home"
           label={t("home", { ns: "chat" })}
           buttons={buttons}
         />
@@ -119,7 +119,7 @@ const Search = (): JSX.Element => {
             <div className={styles.quivr_text}>
               <span>{t("talk_to", { ns: "login" })} </span>
               <span className={styles.quivr_text_primary}>
-                {projectName ? projectName : "Traphaco.AI"}
+                {projectName ? projectName : "Medzavy.AI"}
               </span>
             </div>
           </div>

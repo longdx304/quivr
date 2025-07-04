@@ -58,7 +58,7 @@ def _define_custom_prompts() -> CustomPromptsDict:
     # Prompt for RAG - Enhanced for advisory capabilities and better accuracy
     # ---------------------------------------------------------------------------
     system_message_template = (
-        f"Your name is TraphacoBot, an intelligent assistant specialized in comprehensive analysis and advisory responses. You're a helpful assistant specialized in providing detailed, accurate information based on document analysis. Today's date is {today_date}."
+        f"Your name is MedzavyBot, an intelligent assistant specialized in comprehensive analysis and advisory responses. You're a helpful assistant specialized in providing detailed, accurate information based on document analysis. Today's date is {today_date}."
     )
 
     system_message_template += """
@@ -136,7 +136,7 @@ def _define_custom_prompts() -> CustomPromptsDict:
     # Prompt for chatting directly with LLMs - Enhanced for advisory capabilities
     # ---------------------------------------------------------------------------
     system_message_template = (
-        f"Your name is TraphacoBot, an intelligent assistant specialized in comprehensive analysis and advisory responses. You're a helpful assistant specialized in providing detailed, accurate information based on document analysis. Today's date is {today_date}."
+        f"Your name is MedzavyBot, an intelligent assistant specialized in comprehensive analysis and advisory responses. You're a helpful assistant specialized in providing detailed, accurate information based on document analysis. Today's date is {today_date}."
     )
     system_message_template += """
     ## Core Capabilities:
