@@ -194,6 +194,7 @@ class RAGService:
     async def generate_answer(
         self,
         question: str,
+        payloadMetadata: dict,
     ):
         logger.info(
             f"Creating question for chat {self.chat_id} with brain {self.brain.brain_id} "
@@ -256,6 +257,7 @@ class RAGService:
         )
         metadata["snippet_color"] = self.brain.snippet_color if self.brain else None
         metadata["snippet_emoji"] = self.brain.snippet_emoji if self.brain else None
+        metadata.update(payloadMetadata)
         return GetChatHistoryOutput(
             **{
                 "chat_id": self.chat_id,
@@ -283,6 +285,7 @@ class RAGService:
     async def generate_answer_stream(
         self,
         question: str,
+        payloadMetadata: dict,
     ):
         logger.info(
             f"Creating question for chat {self.chat_id} with brain {self.brain.brain_id} "
@@ -329,6 +332,7 @@ class RAGService:
         metadata = {}
         metadata["snippet_color"] = self.brain.snippet_color if self.brain else None
         metadata["snippet_emoji"] = self.brain.snippet_emoji if self.brain else None
+        metadata.update(payloadMetadata)
         message_metadata = {
             "chat_id": self.chat_id,
             "message_id": uuid4(),  # do we need it ?,
