@@ -4,8 +4,8 @@ from datetime import datetime
 import json
 from loguru import logger
 
-from .database import supabase_conn, sqlserver_conn
-from .config import etl_config
+from database import supabase_conn, sqlserver_conn
+from config import etl_config
 
 class BaseExtractor:
     """Base class for all table extractors"""

@@ -17,12 +17,75 @@ class MegaparseProcessor:
 ```
 
 **Benefits**:
+
 - Easy to add new chunking strategies
 - Backwards compatibility maintained
 - Runtime configuration flexibility
 - Clean separation of concerns
 
-### 2. Strategy Pattern (ETL Data Processing)
+### 2. UPSERT Pattern (ETL Data Synchronization) ⭐ RECENTLY ADDED
+
+Critical pattern for handling incremental sync with duplicate records:
+
+```python
+class SQLServerConnection:
+    def bulk_upsert_dataframe(self, df: pd.DataFrame, table_name: str,
+                             primary_keys: list[str], schema: str = "dwh") -> int:
+        """Bulk upsert using SQL Server MERGE statements"""
+        # Create temporary table
+        temp_table = f"temp_{table_name}_{int(time.time())}"
+
+        # Insert data into temp table
+        df.to_sql(temp_table, self.engine, schema=schema, if_exists='replace')
+
+        # Build MERGE statement
+        pk_condition = " AND ".join([f"target.[{pk}] = source.[{pk}]" for pk in primary_keys])
+
+        merge_sql = f"""
+            MERGE [{schema}].[{table_name}] AS target
+            USING [{schema}].[{temp_table}] AS source
+            ON {pk_condition}
+            WHEN MATCHED THEN UPDATE SET ...
+            WHEN NOT MATCHED THEN INSERT ...
+        """
+
+        # Execute and cleanup
+        self.engine.execute(text(merge_sql))
+        self.engine.execute(text(f"DROP TABLE [{schema}].[{temp_table}]"))
+```
+
+**Problem Solved**: PRIMARY KEY constraint violations during incremental sync
+
+- **Before**: `if_exists='append'` caused INSERT failures on existing records
+- **After**: MERGE statement handles UPDATE vs INSERT automatically
+
+**Benefits**:
+
+- **Handles duplicates gracefully** without errors
+- **Atomic operations** via MERGE statements
+- **Performance optimized** with temporary tables
+- **Reliable cleanup** even on errors
+- **Works with composite primary keys**
+
+**Usage Pattern**:
+
+```python
+# ETL sync logic chooses appropriate method
+if incremental and table_name in etl_config.TABLE_PRIMARY_KEYS:
+    # Use UPSERT for incremental sync
+    primary_keys = etl_config.TABLE_PRIMARY_KEYS[table_name]
+    rows_loaded = self.sqlserver.bulk_upsert_dataframe(
+        df, table_name, primary_keys, schema='dwh'
+    )
+else:
+    # Use INSERT for full sync (after truncate)
+    self.sqlserver.truncate_table(table_name, schema='dwh')
+    rows_loaded = self.sqlserver.bulk_insert_dataframe(
+        df, table_name, schema='dwh', if_exists='append'
+    )
+```
+
+### 3. Strategy Pattern (ETL Data Processing)
 
 Different sync strategies are implemented based on table characteristics:
 
@@ -36,11 +99,12 @@ class TableExtractor:
 ```
 
 **Strategy Types**:
+
 - **Incremental Sync**: For high-frequency tables (chat_history, notifications)
 - **Full Sync**: For reference tables (users, brains, prompts)
 - **Relationship Sync**: For many-to-many mappings
 
-### 3. Factory Pattern (Database Connections)
+### 4. Factory Pattern (Database Connections)
 
 Database connections are created through factories for different database types:
 
@@ -49,19 +113,20 @@ class DatabaseFactory:
     @staticmethod
     def create_source_db() -> SupabaseConnection:
         return SupabaseConnection(config.SUPABASE_URL)
-    
+
     @staticmethod
     def create_target_db() -> SQLServerConnection:
         return SQLServerConnection(config.SQLSERVER_URL)
 ```
 
 **Benefits**:
+
 - Consistent connection management
 - Easy to add new database types
 - Connection pooling abstraction
 - Configuration encapsulation
 
-### 4. Observer Pattern (Monitoring & Alerting)
+### 5. Observer Pattern (Monitoring & Alerting)
 
 ETL monitoring uses observer pattern for notifications:
 
@@ -69,19 +134,20 @@ ETL monitoring uses observer pattern for notifications:
 class ETLMonitor:
     def __init__(self):
         self.observers = [EmailNotifier(), SlackNotifier(), LoggingObserver()]
-    
+
     def notify_completion(self, metrics: ETLMetrics):
         for observer in self.observers:
             observer.handle_event(metrics)
 ```
 
 **Observer Types**:
+
 - **EmailNotifier**: Sends completion/error emails
 - **SlackNotifier**: Posts to Slack channels
 - **LoggingObserver**: Structured logging
 - **HealthCheckObserver**: Updates health endpoints
 
-### 5. Chain of Responsibility (RAG Processing)
+### 6. Chain of Responsibility (RAG Processing)
 
 Document processing follows a chain of responsibility:
 
@@ -90,12 +156,13 @@ Document Input → Metadata Extractor → Content Parser → Semantic Splitter �
 ```
 
 Each handler in the chain:
+
 - Processes its specific aspect
 - Passes enriched data to next handler
 - Can short-circuit on errors
 - Maintains processing context
 
-### 6. Repository Pattern (Data Access)
+### 7. Repository Pattern (Data Access)
 
 Both systems use repository pattern for data access:
 
@@ -103,13 +170,14 @@ Both systems use repository pattern for data access:
 class ChatRepository:
     def get_by_timerange(self, start: datetime, end: datetime) -> List[Chat]:
         # Implementation abstracted from business logic
-        
+
 class BrainRepository:
     def get_active_brains(self) -> List[Brain]:
         # Database specifics hidden from consumers
 ```
 
 **Benefits**:
+
 - Database agnostic business logic
 - Easy testing with mock repositories
 - Clean separation of data access
@@ -122,6 +190,7 @@ class BrainRepository:
 **Decision**: Hybrid approach with separate ETL service but integrated RAG enhancement
 
 **Reasoning**:
+
 - RAG enhancement integrates tightly with existing Quivr core
 - ETL pipeline operates independently with different lifecycle
 - Allows independent scaling and deployment
@@ -132,6 +201,7 @@ class BrainRepository:
 **Decision**: SQL Server over PostgreSQL for analytics
 
 **Reasoning**:
+
 - Better BI tool integration (Power BI, SSRS)
 - Strong analytics and reporting features
 - Familiar to business users
@@ -143,6 +213,7 @@ class BrainRepository:
 **Decision**: Asynchronous processing with scheduled jobs
 
 **Reasoning**:
+
 - Doesn't impact user-facing application performance
 - Allows batch optimization for efficiency
 - Easier error handling and recovery
@@ -153,6 +224,7 @@ class BrainRepository:
 **Decision**: External API (OpenAI) with local fallback
 
 **Reasoning**:
+
 - High-quality embeddings without local GPU requirements
 - Fallback to recursive chunking ensures reliability
 - Cost-effective for most use cases
@@ -163,6 +235,7 @@ class BrainRepository:
 **Decision**: Environment-based configuration with Pydantic validation
 
 **Reasoning**:
+
 - Type safety and validation at startup
 - Easy deployment across environments
 - Clear documentation of required settings
@@ -195,12 +268,12 @@ graph TD
     C --> D[Data Transformers]
     D --> E[Data Loaders]
     E --> F[SQL Server DWH]
-    
+
     G[Monitor] --> B
     G --> H[Email Notifier]
     G --> I[Slack Notifier]
     G --> J[Health Checks]
-    
+
     K[Config Manager] --> B
     K --> C
     K --> D
@@ -217,7 +290,7 @@ graph LR
     D --> E[SQL Server DWH]
     E --> F[Analytics Views]
     F --> G[Business Intelligence]
-    
+
     H[User Queries] --> B
     B --> I[Enhanced Responses]
 ```
@@ -233,7 +306,7 @@ class OpenAIEmbeddingService:
             failure_threshold=5,
             recovery_timeout=60
         )
-    
+
     def get_embeddings(self, texts: List[str]) -> Optional[List[float]]:
         return self.circuit_breaker.call(self._api_call, texts)
 ```
@@ -296,9 +369,9 @@ class DocumentProcessor:
 ```python
 class DataSanitizer:
     SENSITIVE_FIELDS = ['api_key', 'password', 'embedding']
-    
+
     def sanitize_record(self, record: Dict) -> Dict:
-        return {k: v for k, v in record.items() 
+        return {k: v for k, v in record.items()
                 if k not in self.SENSITIVE_FIELDS}
 ```
 
@@ -326,9 +399,9 @@ class SecureConfig:
 class MockChatRepository:
     def __init__(self, test_data: List[Chat]):
         self.data = test_data
-    
+
     def get_by_timerange(self, start: datetime, end: datetime) -> List[Chat]:
-        return [chat for chat in self.data 
+        return [chat for chat in self.data
                 if start <= chat.created_at <= end]
 ```
 
@@ -339,7 +412,7 @@ class ETLIntegrationTest:
     def setUp(self):
         self.test_db = create_test_database()
         self.etl_service = ETLService(test_config)
-    
+
     def test_full_sync_workflow(self):
         # Test complete ETL workflow with real database
 ```
@@ -373,7 +446,7 @@ class HealthChecker:
 class MetricsCollector:
     def record_processing_time(self, operation: str, duration: float):
         self.metrics[f"{operation}_duration"].append(duration)
-    
+
     def record_error(self, operation: str, error_type: str):
         self.metrics[f"{operation}_errors"][error_type] += 1
 ```
@@ -387,4 +460,4 @@ class AlertManager:
             handler.send_alert(message)
 ```
 
-These patterns provide a robust foundation for both the RAG enhancement and ETL systems, ensuring maintainability, scalability, and reliability while following established software engineering best practices. 
+These patterns provide a robust foundation for both the RAG enhancement and ETL systems, ensuring maintainability, scalability, and reliability while following established software engineering best practices.

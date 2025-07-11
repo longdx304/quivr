@@ -12,11 +12,12 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from loguru import logger
+from sqlalchemy import text
 
-from .config import db_config, etl_config
-from .database import supabase_conn, sqlserver_conn
-from .extractors import get_all_extractors
-from .utils import setup_logging, send_notification
+from config import db_config, etl_config
+from database import supabase_conn, sqlserver_conn
+from extractors import get_all_extractors
+from utils import setup_logging, send_notification
 
 class ETLPipeline:
     """Main ETL Pipeline orchestrator"""
@@ -40,6 +41,10 @@ class ETLPipeline:
         try:
             logger.info("Initializing ETL Pipeline...")
             
+            # Log configuration for debugging
+            logger.info(f"Configuration: Supabase={db_config.SUPABASE_HOST}:{db_config.SUPABASE_PORT}, "
+                       f"SQLServer={db_config.SQLSERVER_HOST}:{db_config.SQLSERVER_PORT}")
+            
             # Test connections
             if not self._test_connections():
                 return False
@@ -59,7 +64,7 @@ class ETLPipeline:
         try:
             # Test Supabase connection
             with self.supabase.get_session() as session:
-                session.execute("SELECT 1")
+                session.execute(text("SELECT 1"))
             logger.info("✓ Supabase connection successful")
             
             # Test SQL Server connection
@@ -80,16 +85,8 @@ class ETLPipeline:
             # Create database if it doesn't exist
             self.sqlserver.create_database_if_not_exists()
             
-            # Run schema creation script
-            with open('backend/etl/sql_scripts/create_warehouse_schema.sql', 'r') as f:
-                schema_script = f.read()
-            
-            # Execute schema script in chunks
-            statements = schema_script.split('GO')
-            for statement in statements:
-                statement = statement.strip()
-                if statement and not statement.startswith('--'):
-                    self.sqlserver.execute_query(statement)
+            # Initialize the database schema using the improved method
+            self.sqlserver.initialize_database_schema(force_recreate=True)
             
             logger.info("Target database schema setup completed")
             
@@ -217,10 +214,11 @@ class ETLPipeline:
                 return True
             
             # Load data to SQL Server
-            if incremental:
-                # For incremental, append data
-                rows_loaded = self.sqlserver.bulk_insert_dataframe(
-                    df, table_name, schema='dwh', if_exists='append'
+            if incremental and table_name in etl_config.TABLE_PRIMARY_KEYS:
+                # For incremental, use UPSERT to handle duplicates
+                primary_keys = etl_config.TABLE_PRIMARY_KEYS[table_name]
+                rows_loaded = self.sqlserver.bulk_upsert_dataframe(
+                    df, table_name, primary_keys, schema='dwh'
                 )
             else:
                 # For full sync, replace data
@@ -265,9 +263,10 @@ class ETLPipeline:
         }
         logger.info(f"=== ETL Execution Started (ID: {self.execution_id}) ===")
     
-    def _finish_execution(self, success: bool, error_message: str = None):
+    def _finish_execution(self, success: bool, error_message: Optional[str] = None):
         """Finish execution tracking"""
-        self.stats['execution_time'] = time.time() - self.start_time
+        if self.start_time is not None:
+            self.stats['execution_time'] = int(time.time() - self.start_time)
         
         status = "SUCCESS" if success else "FAILED"
         logger.info(f"=== ETL Execution Finished (ID: {self.execution_id}) ===")
@@ -290,7 +289,7 @@ class ETLPipeline:
         except Exception as e:
             logger.warning(f"Failed to send notification: {e}")
     
-    def _log_execution(self, success: bool, error_message: str = None):
+    def _log_execution(self, success: bool, error_message: Optional[str] = None):
         """Log execution to database"""
         try:
             query = """
@@ -301,9 +300,11 @@ class ETLPipeline:
                         :records_processed, :error_message, :duration)
             """
             
+            start_timestamp = self.start_time if self.start_time is not None else time.time()
+            
             params = {
                 'execution_id': self.execution_id,
-                'start_time': datetime.utcfromtimestamp(self.start_time),
+                'start_time': datetime.utcfromtimestamp(start_timestamp),
                 'end_time': datetime.utcnow(),
                 'status': 'SUCCESS' if success else 'FAILED',
                 'records_processed': self.stats['total_records'],
@@ -317,7 +318,7 @@ class ETLPipeline:
             logger.error(f"Failed to log execution: {e}")
     
     def _log_table_execution(self, table_name: str, success: bool, 
-                           records: int, duration: float, error: str = None):
+                           records: int, duration: float, error: Optional[str] = None):
         """Log individual table execution"""
         try:
             query = """

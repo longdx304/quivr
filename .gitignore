@@ -104,3 +104,7 @@ backend/core/examples/chatbot/.chainlit/translations/en-US.json
 Pipfile
 *.pkl
 backend/docs/site/*
+
+# Supabase Auth Proxy - Security Files
+supabase-auth-proxy/config
+supabase-auth-proxy/.env

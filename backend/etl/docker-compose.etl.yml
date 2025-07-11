@@ -7,20 +7,20 @@ services:
       - SA_PASSWORD=YourPassword123!
       - MSSQL_PID=Express
     ports:
-      - '1433:1433'
+      - "1433:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
       - ./sql_scripts:/docker-entrypoint-initdb.d
     healthcheck:
       test:
         [
-          'CMD-SHELL',
-          "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'YourPassword123!' -Q 'SELECT 1' || exit 1",
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'YourPassword123!' -C -Q 'SELECT 1' || exit 1",
         ]
       interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
+      timeout: 15s
+      retries: 10
+      start_period: 60s
     networks:
       - etl-network
 
@@ -30,41 +30,40 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      # Supabase Configuration (Source)
-      - SUPABASE_HOST=host.docker.internal # Points to host machine
-      - SUPABASE_PORT=54322
-      - SUPABASE_DATABASE=postgres
-      - SUPABASE_USER=postgres
-      - SUPABASE_PASSWORD=postgres
-      - SUPABASE_SCHEMA=public
+      # Supabase Configuration (Source) - Use environment variables with defaults
+      - SUPABASE_HOST=${SUPABASE_HOST}
+      - SUPABASE_PORT=${SUPABASE_PORT}
+      - SUPABASE_DATABASE=${SUPABASE_DATABASE}
+      - SUPABASE_USER=${SUPABASE_USER}
+      - SUPABASE_PASSWORD=${SUPABASE_PASSWORD}
+      - SUPABASE_SCHEMA=${SUPABASE_SCHEMA}
 
-      # SQL Server Configuration (Target)
-      - SQLSERVER_HOST=sqlserver
-      - SQLSERVER_PORT=1433
-      - SQLSERVER_DATABASE=DataWarehouse
-      - SQLSERVER_USER=sa
-      - SQLSERVER_PASSWORD=YourPassword123!
-      - SQLSERVER_DRIVER=ODBC Driver 18 for SQL Server
+      # SQL Server Configuration (Target) - Use environment variables with defaults
+      - SQLSERVER_HOST=${SQLSERVER_HOST}
+      - SQLSERVER_PORT=${SQLSERVER_PORT}
+      - SQLSERVER_DATABASE=${SQLSERVER_DATABASE}
+      - SQLSERVER_USER=${SQLSERVER_USER}
+      - SQLSERVER_PASSWORD=${SQLSERVER_PASSWORD}
+      - SQLSERVER_DRIVER=${SQLSERVER_DRIVER}
 
-      # ETL Configuration
-      - BATCH_SIZE=1000
-      - LOG_LEVEL=INFO
-      - SYNC_INTERVAL_MINUTES=60
-      - MAX_RETRIES=3
-      - RETRY_DELAY=5
-      - PARALLEL_WORKERS=4
-      - CONNECTION_POOL_SIZE=10
+      # ETL Configuration - Use environment variables with defaults
+      - BATCH_SIZE=${BATCH_SIZE}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - SYNC_INTERVAL_MINUTES=${SYNC_INTERVAL_MINUTES}
+      - MAX_RETRIES=${MAX_RETRIES}
+      - RETRY_DELAY=${RETRY_DELAY}
+      - PARALLEL_WORKERS=${PARALLEL_WORKERS}
+      - CONNECTION_POOL_SIZE=${CONNECTION_POOL_SIZE}
 
-      # Optional: Email Notifications
-      # - ETL_SMTP_SERVER=smtp.gmail.com
-      # - ETL_SMTP_PORT=587
-      # - ETL_SMTP_USERNAME=your-email@gmail.com
-      # - ETL_SMTP_PASSWORD=your-app-password
-      # - ETL_FROM_EMAIL=your-email@gmail.com
-      # - ETL_TO_EMAILS=admin1@company.com,admin2@company.com
+      # Optional: Email Notifications (will use from .env if defined)
+      - ETL_SMTP_SERVER=${ETL_SMTP_SERVER}
+      - ETL_SMTP_PORT=${ETL_SMTP_PORT}
+      - ETL_SMTP_USERNAME=${ETL_SMTP_USERNAME}
+      - ETL_SMTP_PASSWORD=${ETL_SMTP_PASSWORD}
+      - ETL_FROM_EMAIL=${ETL_FROM_EMAIL}
 
-      # Optional: Slack Notifications
-      # - ETL_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+      # Optional: Slack Notifications (will use from .env if defined)
+      - ETL_SLACK_WEBHOOK_URL=${ETL_SLACK_WEBHOOK_URL}
 
     volumes:
       - etl_logs:/app/etl_logs
@@ -85,36 +84,15 @@ services:
     healthcheck:
       test:
         [
-          'CMD',
-          'python',
-          '-c',
-          'from utils import get_database_health; print(get_database_health())',
+          "CMD",
+          "python",
+          "-c",
+          "from utils import get_database_health; print(get_database_health())",
         ]
       interval: 60s
       timeout: 30s
       retries: 3
       start_period: 60s
-
-  # Optional: ETL Web Interface (for monitoring)
-  etl-web:
-    build:
-      context: .
-      dockerfile: Dockerfile.web
-    environment:
-      - SQLSERVER_HOST=sqlserver
-      - SQLSERVER_PORT=1433
-      - SQLSERVER_DATABASE=DataWarehouse
-      - SQLSERVER_USER=sa
-      - SQLSERVER_PASSWORD=YourPassword123!
-    ports:
-      - '8080:8080'
-    depends_on:
-      - sqlserver
-      - etl-app
-    networks:
-      - etl-network
-    profiles:
-      - monitoring # Optional service, enable with: docker compose --profile monitoring up
 
 # Named volumes for persistence
 volumes:

@@ -4,14 +4,21 @@ Utility functions for ETL pipeline
 
 import os
 import sys
-import smtplib
-from email.mime.text import MimeText
-from email.mime.multipart import MimeMultipart
 from typing import Dict, Any, Optional
 from datetime import datetime
 from loguru import logger
 import json
 import time
+
+# Optional email imports (for notifications)
+try:
+    import smtplib
+    from email.mime.text import MimeText
+    from email.mime.multipart import MimeMultipart
+    EMAIL_AVAILABLE = True
+except ImportError:
+    EMAIL_AVAILABLE = False
+    logger.warning("Email functionality not available - notifications will be logged only")
 
 def setup_logging(log_level: str = "INFO"):
     """Setup logging configuration"""
@@ -85,6 +92,10 @@ def _get_slack_config() -> Optional[Dict[str, str]]:
 def _send_email_notification(execution_id: str, success: bool, stats: Dict[str, Any],
                            error_message: Optional[str], config: Dict[str, str]):
     """Send email notification"""
+    if not EMAIL_AVAILABLE:
+        logger.warning("Email not available - skipping email notification")
+        return
+    
     try:
         # Create message
         msg = MimeMultipart()

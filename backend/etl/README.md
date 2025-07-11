@@ -64,6 +64,7 @@ docker compose -f docker-compose.etl.yml logs etl-app
 ### Database Configuration
 
 #### Supabase (Source)
+
 ```bash
 SUPABASE_HOST=localhost
 SUPABASE_PORT=54322  # Your Supabase local port
@@ -73,6 +74,7 @@ SUPABASE_PASSWORD=postgres
 ```
 
 #### SQL Server (Target)
+
 ```bash
 SQLSERVER_HOST=localhost
 SQLSERVER_PORT=1433
@@ -84,29 +86,21 @@ SQLSERVER_PASSWORD=YourPassword123!
 ### ETL Configuration
 
 #### Sync Tables
+
 The pipeline synchronizes these tables by default:
+
 - `users` - User accounts
 - `brains` - AI brain configurations
-- `chats` - Chat sessions
-- `chat_history` - Chat messages
-- `vectors` - Document embeddings (metadata only)
 - `knowledge` - Knowledge base files
-- `api_keys` - API access keys (excluding sensitive data)
 - `user_settings` - User preferences
-- `notifications` - System notifications
-- `prompts` - Custom prompts
 - `brains_users` - Brain access permissions
-- `brains_vectors` - Brain-vector relationships
-- `knowledge_vectors` - Knowledge-vector relationships
 - `user_daily_usage` - Usage statistics
 
 #### Incremental Sync
+
 These tables support incremental synchronization:
-- `chat_history` - Based on `message_time`
-- `chats` - Based on `creation_time`
-- `notifications` - Based on `datetime`
+
 - `user_daily_usage` - Based on `date`
-- `vectors` - Based on `id`
 - `knowledge` - Based on `id`
 
 ## 📊 Data Warehouse Schema
@@ -118,8 +112,6 @@ DataWarehouse/
 ├── dwh/          # Main data tables
 │   ├── users
 │   ├── brains
-│   ├── chats
-│   ├── chat_history
 │   ├── vectors
 │   ├── knowledge
 │   └── ...
@@ -156,6 +148,7 @@ docker exec -it etl-etl-app-1 python etl_main.py --mode full --tables users brai
 ## 📈 Monitoring & Logging
 
 ### Log Files
+
 ```bash
 # View ETL logs
 docker exec -it etl-etl-app-1 tail -f etl_logs/etl_$(date +%Y-%m-%d).log
@@ -165,21 +158,23 @@ docker exec -it etl-etl-app-1 ls -la etl_reports/
 ```
 
 ### Database Monitoring
+
 ```sql
 -- Check ETL execution history
-SELECT TOP 10 * 
-FROM etl.etl_execution_log 
+SELECT TOP 10 *
+FROM etl.etl_execution_log
 ORDER BY start_time DESC;
 
 -- Check sync control status
 SELECT * FROM etl.etl_control;
 
 -- View daily chat activity
-SELECT * FROM dwh.v_daily_chat_activity 
+SELECT * FROM dwh.v_daily_chat_activity
 ORDER BY date DESC;
 ```
 
 ### Health Checks
+
 ```bash
 # Check application health
 docker exec -it etl-etl-app-1 python -c "
@@ -192,6 +187,7 @@ print(json.dumps(get_database_health(), indent=2))
 ## 🔔 Notifications
 
 ### Email Notifications
+
 Configure email notifications by setting these environment variables:
 
 ```bash
@@ -204,6 +200,7 @@ ETL_TO_EMAILS=admin1@company.com,admin2@company.com
 ```
 
 ### Slack Notifications
+
 Configure Slack notifications:
 
 ```bash
@@ -215,6 +212,7 @@ ETL_SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
 ### Common Issues
 
 #### 1. SQL Server Connection Failed
+
 ```bash
 # Check if SQL Server is running
 docker compose -f docker-compose.etl.yml ps sqlserver
@@ -225,6 +223,7 @@ docker exec -it etl-sqlserver-1 /opt/mssql-tools/bin/sqlcmd \
 ```
 
 #### 2. Supabase Connection Failed
+
 ```bash
 # Check if Supabase is accessible from container
 docker exec -it etl-etl-app-1 python -c "
@@ -241,6 +240,7 @@ print('Supabase connection successful')
 ```
 
 #### 3. ETL Application Not Starting
+
 ```bash
 # Check application logs
 docker compose -f docker-compose.etl.yml logs etl-app
@@ -256,6 +256,7 @@ print('ETL Config loaded successfully')
 ### Performance Tuning
 
 #### Optimize Batch Size
+
 ```bash
 # For large datasets, increase batch size
 BATCH_SIZE=5000
@@ -265,6 +266,7 @@ BATCH_SIZE=500
 ```
 
 #### Parallel Processing
+
 ```bash
 # Increase parallel workers for faster sync
 PARALLEL_WORKERS=8
@@ -329,42 +331,6 @@ python etl_main.py --mode full --tables users --log-level DEBUG
 ## 📊 Analytics Queries
 
 ### Daily Activity Report
-```sql
-SELECT 
-    date,
-    total_messages,
-    unique_chats,
-    unique_users
-FROM dwh.v_daily_chat_activity
-WHERE date >= DATEADD(day, -7, GETDATE())
-ORDER BY date DESC;
-```
-
-### Brain Usage Summary
-```sql
-SELECT 
-    brain_name,
-    brain_type,
-    user_count,
-    message_count,
-    last_used
-FROM dwh.v_brain_usage_summary
-WHERE message_count > 0
-ORDER BY message_count DESC;
-```
-
-### User Activity Summary
-```sql
-SELECT 
-    email,
-    total_chats,
-    total_messages,
-    brain_count,
-    last_activity
-FROM dwh.v_user_activity_summary
-WHERE total_messages > 0
-ORDER BY total_messages DESC;
-```
 
 ## 🔒 Security Considerations
 
@@ -405,4 +371,4 @@ For issues or questions:
 
 ---
 
-**Note**: This ETL pipeline is designed for the Quivr application architecture. Modify table configurations and transformations based on your specific requirements. 
+**Note**: This ETL pipeline is designed for the Quivr application architecture. Modify table configurations and transformations based on your specific requirements.

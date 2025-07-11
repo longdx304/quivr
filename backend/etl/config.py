@@ -18,12 +18,11 @@ class DatabaseConfig(BaseSettings):
     SQLSERVER_DATABASE: str = Field(default="DataWarehouse", description="SQL Server database")
     SQLSERVER_USER: str = Field(default="sa", description="SQL Server username")
     SQLSERVER_PASSWORD: str = Field(default="YourPassword123", description="SQL Server password")
-    SQLSERVER_DRIVER: str = Field(default="ODBC Driver 17 for SQL Server", description="SQL Server ODBC driver")
+    SQLSERVER_DRIVER: str = Field(default="ODBC Driver 18 for SQL Server", description="SQL Server ODBC driver")
     
     # ETL Configuration
     BATCH_SIZE: int = Field(default=1000, description="Batch size for data processing")
     LOG_LEVEL: str = Field(default="INFO", description="Logging level")
-    SYNC_INTERVAL_MINUTES: int = Field(default=60, description="Sync interval in minutes")
     MAX_RETRIES: int = Field(default=3, description="Maximum retry attempts")
     RETRY_DELAY: int = Field(default=5, description="Retry delay in seconds")
     
@@ -34,6 +33,7 @@ class DatabaseConfig(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"  # Ignore extra environment variables
 
     @property
     def supabase_url(self) -> str:
@@ -43,28 +43,26 @@ class DatabaseConfig(BaseSettings):
     @property
     def sqlserver_url(self) -> str:
         """Generate SQL Server connection URL"""
-        return f"mssql+pyodbc://{self.SQLSERVER_USER}:{self.SQLSERVER_PASSWORD}@{self.SQLSERVER_HOST}:{self.SQLSERVER_PORT}/{self.SQLSERVER_DATABASE}?driver={self.SQLSERVER_DRIVER.replace(' ', '+')}"
+        driver_param = self.SQLSERVER_DRIVER.replace(' ', '+')
+        return f"mssql+pyodbc://{self.SQLSERVER_USER}:{self.SQLSERVER_PASSWORD}@{self.SQLSERVER_HOST}:{self.SQLSERVER_PORT}/{self.SQLSERVER_DATABASE}?driver={driver_param}&TrustServerCertificate=yes"
 
 class ETLConfig(BaseSettings):
     """ETL pipeline configuration"""
+    
+    # Scheduling Configuration
+    SYNC_INTERVAL_MINUTES: int = Field(default=60, description="Sync interval in minutes")
+    FULL_SYNC_HOUR: int = Field(default=2, description="Hour to run full sync (24-hour format)")
     
     # Table Configuration - Define which tables to sync
     SYNC_TABLES: list[str] = Field(
         default=[
             "users",
             "brains", 
-            "chats",
-            "chat_history",
-            "vectors",
             "knowledge",
-            "api_keys",
-            "user_settings",
-            "notifications",
-            "prompts",
             "brains_users",
-            "brains_vectors",
-            "knowledge_vectors",
-            "user_daily_usage"
+            "user_daily_usage",
+            "chats",
+            "chat_history"
         ],
         description="List of tables to synchronize"
     )
@@ -72,12 +70,10 @@ class ETLConfig(BaseSettings):
     # Incremental sync configuration
     INCREMENTAL_TABLES: dict[str, str] = Field(
         default={
-            "chat_history": "message_time",
-            "chats": "creation_time", 
-            "notifications": "datetime",
             "user_daily_usage": "date",
-            "vectors": "id",  # Use ID for change tracking
-            "knowledge": "id"
+            "knowledge": "id",
+            "chats": "creation_time",
+            "chat_history": "message_time"
         },
         description="Tables with incremental sync and their timestamp/ID columns"
     )
@@ -85,11 +81,29 @@ class ETLConfig(BaseSettings):
     # Data transformation rules
     EXCLUDE_COLUMNS: dict[str, list[str]] = Field(
         default={
-            "api_keys": ["api_key"],  # Exclude sensitive data
             "users": [],  # Could exclude PII if needed
         },
         description="Columns to exclude from sync per table"
     )
+    
+    # Primary key configuration for UPSERT operations
+    TABLE_PRIMARY_KEYS: dict[str, list[str]] = Field(
+        default={
+            'users': ['id'],
+            'brains': ['brain_id'],
+            'knowledge': ['id'],
+            'brains_users': ['brain_id', 'user_id'],
+            'user_daily_usage': ['user_id', 'date'],
+            'chats': ['chat_id'],
+            'chat_history': ['message_id']
+        },
+        description="Primary key columns for each table (used for UPSERT operations)"
+    )
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+        extra = "ignore"  # Ignore extra environment variables
 
 # Global configuration instances
 db_config = DatabaseConfig()

@@ -1,0 +1,310 @@
+# Quivr Project Intelligence
+
+## Project Overview
+
+Quivr is an enterprise RAG system with dual capabilities:
+
+1. **Enhanced Document Chat**: Semantic chunking with Vietnamese language support
+2. **Data Analytics Pipeline**: ETL from Supabase to SQL Server for business intelligence
+
+## Development Patterns
+
+### Memory Bank First
+
+- ALWAYS read memory bank files before starting any task
+- Memory bank is the source of truth for project context
+- Update memory bank after significant changes or discoveries
+
+### ETL Development (Current Focus - feat/etl-ssis branch)
+
+- **Primary Location**: `backend/etl/`
+- **Key Files**:
+  - `etl_main.py` - Main orchestrator
+  - `config.py` - Configuration with Pydantic
+  - `database.py` - Connection management
+  - `extractors.py` - Data processing logic
+  - `docker-compose.etl.yml` - Deployment stack
+
+### Database Connections
+
+- **Source**: Supabase PostgreSQL on localhost:54323 (user specified port)
+- **Target**: SQL Server 2022 Express on localhost:1433
+- **Note**: User uses non-standard Supabase port 54323 - always verify this
+
+### Configuration Management
+
+- Use Pydantic models for type-safe configuration
+- Environment variables in `.env` files (template: `env.template`)
+- Always validate configuration at startup
+- Support for optional monitoring features (email, Slack)
+
+### Error Handling Patterns
+
+- Comprehensive retry logic with exponential backoff
+- Graceful fallbacks (semantic chunking → recursive chunking)
+- Continue processing other items if one fails
+- Detailed logging for troubleshooting
+
+### Security Patterns
+
+- Exclude sensitive fields automatically (api_keys, embeddings)
+- Use connection pooling for database access
+- Implement proper audit trails and data lineage
+- Network isolation in Docker environments
+
+## Development Workflow
+
+### ETL Development
+
+```bash
+cd backend/etl
+cp env.template .env  # Configure environment
+docker-compose -f docker-compose.etl.yml up -d
+docker logs etl-app -f  # Monitor logs
+```
+
+### Testing Connections
+
+- Supabase: `localhost:54323` (user's configuration)
+- SQL Server: `localhost:1433` (standard)
+- ETL Health: `localhost:8001/health`
+
+### Common Commands
+
+```bash
+# ETL stack management
+docker-compose -f docker-compose.etl.yml up -d
+docker-compose -f docker-compose.etl.yml logs -f
+docker-compose -f docker-compose.etl.yml down
+
+# Database connections
+psql -h localhost -p 54323 -U postgres  # Supabase
+sqlcmd -S localhost -U sa  # SQL Server
+```
+
+## File Organization Preferences
+
+### ETL System Structure
+
+```
+backend/etl/
+├── config.py           # Pydantic configuration models
+├── database.py         # Connection classes with pooling
+├── extractors.py       # Sync strategies (incremental/full)
+├── etl_main.py        # Main orchestrator with scheduling
+├── utils.py           # Logging, notifications, health
+├── sql_scripts/       # Schema and migration scripts
+├── Dockerfile         # Application container
+└── docker-compose.etl.yml  # Complete stack
+```
+
+### SQL Scripts Naming
+
+- `create_warehouse_schema.sql` - Main schema
+- `create_minimal_schema.sql` - Development/testing schema
+- `fix_*.sql` - Specific issue fixes
+- Follow descriptive naming for maintenance scripts
+
+## Code Quality Standards
+
+### Python Standards
+
+- Use Pydantic for configuration validation
+- Implement proper logging with structured messages
+- Connection pooling for database access
+- Type hints for all function signatures
+- Comprehensive error handling and recovery
+
+### SQL Standards
+
+- Use proper indexing for analytics workloads
+- Include audit fields (created_at, updated_at)
+- Follow consistent naming conventions
+- Document complex queries with comments
+
+### Docker Standards
+
+- Multi-stage builds for optimization
+- Health checks for all services
+- Volume persistence for data
+- Isolated networking for security
+- Environment-based configuration
+
+## Business Context
+
+### Data Processing Strategy
+
+- **Incremental Sync**: High-frequency tables (chat_history, notifications) every 60 minutes
+- **Full Sync**: Reference tables (users, brains, prompts) daily at 2 AM
+- **Parallel Processing**: 3 tables simultaneously (configurable)
+- **Batch Size**: 1000 records (configurable for performance tuning)
+
+### Analytics Focus
+
+- User engagement and behavior metrics
+- System performance and optimization insights
+- Business intelligence for decision making
+- Compliance and audit trail requirements
+
+### Vietnamese Language Support
+
+- Specialized temporal pattern recognition
+- Cultural context preservation in semantic chunking
+- Localized business terminology handling
+
+## Critical Reminders
+
+### Port Configuration
+
+- User uses Supabase on port 54323 (non-standard)
+- Always verify connectivity before assuming default ports
+- Include port in all connection strings and documentation
+
+### Semantic Chunking Context
+
+- Preserves Vietnamese temporal expressions (tháng 4.2025)
+- Fallback to recursive chunking if embeddings fail
+- Enhanced metadata for better retrieval accuracy
+
+### ETL Monitoring
+
+- Health endpoint at localhost:8001/health
+- Comprehensive logging to files and console
+- Email/Slack notifications for errors and completion
+- Metrics collection for performance optimization
+
+## Recent Discoveries
+
+- Project has dual focus: RAG enhancement + ETL pipeline
+- ETL system is production-ready with comprehensive monitoring
+- Semantic chunking solved Vietnamese temporal query issues
+- User environment uses non-standard Supabase port 54323
+- Memory bank is extremely well-maintained and current
+
+## Critical Implementation Patterns
+
+### ETL Data Pipeline - PRIMARY KEY Handling ⭐ CRITICAL LEARNING
+
+**Context**: ETL system was failing with PRIMARY KEY constraint violations during incremental sync
+
+**Problem Pattern**:
+
+- Incremental extraction correctly pulls updated records based on timestamps
+- BUT insertion logic using `if_exists='append'` fails when trying to INSERT existing PRIMARY KEYs
+- Records updated in source database get re-extracted and cause INSERT conflicts
+
+**Solution Pattern**: UPSERT logic with SQL Server MERGE statements
+
+```python
+# WRONG - causes PRIMARY KEY violations
+df.to_sql(table_name, engine, if_exists='append')
+
+# RIGHT - handles duplicates gracefully
+def bulk_upsert_dataframe(df, table_name, primary_keys):
+    # Create temp table → INSERT data → MERGE with target → cleanup
+    temp_table = f"temp_{table_name}_{timestamp}"
+    df.to_sql(temp_table, engine, if_exists='replace')
+
+    merge_sql = f"""
+        MERGE {table_name} AS target
+        USING {temp_table} AS source
+        ON {primary_key_conditions}
+        WHEN MATCHED THEN UPDATE SET ...
+        WHEN NOT MATCHED THEN INSERT ...
+    """
+    execute(merge_sql)
+    drop_table(temp_table)
+```
+
+**Configuration Pattern**: Table-specific primary key mapping
+
+```python
+TABLE_PRIMARY_KEYS = {
+    'users': ['id'],
+    'brains': ['brain_id'],
+    'user_daily_usage': ['user_id', 'date'],  # composite key
+    'chats': ['chat_id'],
+    'chat_history': ['message_id']
+}
+```
+
+**Routing Logic**: Choose sync method based on operation type
+
+```python
+if incremental and table_name in TABLE_PRIMARY_KEYS:
+    # Use UPSERT for incremental (handles duplicates)
+    upsert_dataframe(df, table_name, primary_keys)
+else:
+    # Use INSERT for full sync (after truncate, no duplicates)
+    truncate_table(table_name)
+    insert_dataframe(df, table_name)
+```
+
+**Key Files**:
+
+- `backend/etl/database.py` - UPSERT method implementation
+- `backend/etl/etl_main.py` - Smart routing logic
+- `backend/etl/config.py` - Primary key configuration
+
+### RAG Enhancement - Semantic Chunking
+
+**Context**: Vietnamese temporal queries were failing with recursive chunking
+
+**Pattern**: Embedding-based boundary detection for semantic coherence
+
+```python
+# Configuration approach
+class SplitterConfig:
+    chunking_strategy: str = "semantic"  # vs "recursive"
+    semantic_threshold: float = 0.2
+    fallback_enabled: bool = True
+```
+
+**Implementation Location**: `backend/core/quivr_core/processor/splitter.py`
+
+## Docker Management Patterns
+
+### ETL Stack Operations
+
+**Service Management**:
+
+```bash
+# ETL has separate docker-compose file
+cd backend/etl
+docker-compose -f docker-compose.etl.yml restart etl-app
+docker-compose -f docker-compose.etl.yml logs -f etl-app
+```
+
+**Container Naming**: Services use prefixed names (e.g., `etl-etl-app-1`)
+
+## Memory Bank Maintenance
+
+**Update Triggers**:
+
+- When implementing critical bug fixes (like PRIMARY KEY resolution)
+- After completing major features (semantic chunking, ETL pipeline)
+- When discovering important system patterns
+
+**Key Files to Update**:
+
+- `activeContext.md` - Current work and recent completions
+- `progress.md` - Mark items as completed and document outcomes
+- `systemPatterns.md` - Add new design patterns discovered
+- `etl-system.md` - Update component documentation with enhancements
+
+## Development Workflow
+
+**Problem-Solving Approach**:
+
+1. Identify root cause through log analysis
+2. Implement targeted solution (UPSERT vs generic fixes)
+3. Update configuration to prevent recurrence
+4. Document pattern for future reference
+5. Update memory bank with learning
+
+**Testing Pattern**:
+
+- Implement fix → restart services → monitor logs → validate resolution
+- Create test scripts when needed for validation
+
+This learning ensures similar PRIMARY KEY issues are resolved quickly and prevents future occurrences through proper UPSERT patterns.
