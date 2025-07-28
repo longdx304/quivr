@@ -9,7 +9,6 @@ from contextlib import asynccontextmanager, contextmanager
 from typing import Dict, List, Any, Optional
 from loguru import logger
 from config import db_config
-import time
 
 class SupabaseConnection:
     """Manages connections to Supabase (PostgreSQL) database"""
@@ -461,11 +460,20 @@ class SQLServerConnection:
                 df_copy[col] = pd.to_datetime(df_copy[col], utc=True)
             
             # Handle problematic columns that might cause SQL Server issues
+            # IMPORTANT: Avoid converting text columns to string as it may override truncation logic
+            text_columns = ['user_message', 'assistant', 'content', 'description', 'name']
             for col in df_copy.columns:
-                if df_copy[col].dtype == 'object':
-                    # Handle None values in string columns
+                if df_copy[col].dtype == 'object' and col not in text_columns:
+                    # Handle None values in non-text string columns
                     df_copy[col] = df_copy[col].astype(str)
                     df_copy[col] = df_copy[col].replace('None', None)
+            
+            # Handle boolean columns properly (convert to 0/1 for SQL Server BIT type)
+            boolean_columns = ['thumbs', 'default_brain', 'is_folder', 'is_active', 'only_chat']
+            for col in boolean_columns:
+                if col in df_copy.columns:
+                    # Convert boolean to BIT (0/1) for SQL Server
+                    df_copy[col] = df_copy[col].astype('boolean').fillna(False).astype(int)
             
             # Add ETL metadata column
             df_copy['etl_inserted_at'] = pd.Timestamp.now(tz='UTC')
@@ -473,19 +481,26 @@ class SQLServerConnection:
             # Create comprehensive data type mapping for SQL Server
             dtype_mapping = {}
             
-            # Map all datetime columns to DATETIME2 to avoid TIMESTAMP issues
+            # Map all datetime columns to DateTime to avoid TIMESTAMP issues
             for col in df_copy.columns:
                 if df_copy[col].dtype.name.startswith('datetime'):
+                    # Use DateTime instead of TIMESTAMP to avoid SQL Server timestamp column issues
                     dtype_mapping[col] = sqlalchemy.types.DateTime()
                 elif col in ['id', 'user_id', 'brain_id', 'chat_id', 'message_id', 'prompt_id', 'parent_id']:
                     # Map UUID columns properly - use String for now as UNIQUEIDENTIFIER needs special handling
                     dtype_mapping[col] = sqlalchemy.types.String(36)
-                elif col in ['is_folder', 'default_brain']:
-                    # Map boolean columns
+                elif col in boolean_columns:
+                    # Map boolean columns to BIT
                     dtype_mapping[col] = sqlalchemy.types.Boolean()
+                elif col in ['user_message', 'assistant']:
+                    # Map text columns to NVARCHAR(MAX) explicitly
+                    dtype_mapping[col] = sqlalchemy.types.Text()
                 elif col in ['file_size', 'daily_requests_count']:
                     # Map integer columns
                     dtype_mapping[col] = sqlalchemy.types.BigInteger()
+                elif col == 'etl_inserted_at':
+                    # Explicitly map etl_inserted_at to DateTime to avoid TIMESTAMP conflicts
+                    dtype_mapping[col] = sqlalchemy.types.DateTime()
             
             logger.info(f"Inserting {len(df_copy)} rows into {schema}.{table_name} with dtype mapping: {list(dtype_mapping.keys())}")
             
@@ -508,7 +523,7 @@ class SQLServerConnection:
     
     def bulk_upsert_dataframe(self, df: pd.DataFrame, table_name: str, 
                              primary_keys: list[str], schema: str = "dwh") -> int:
-        """Bulk upsert DataFrame into SQL Server table using MERGE statement"""
+        """Bulk upsert DataFrame into SQL Server table using MERGE statement with Vietnamese character support"""
         try:
             if df.empty:
                 logger.info(f"No data to upsert for table: {table_name}")
@@ -527,80 +542,223 @@ class SQLServerConnection:
             # Handle timestamp columns for SQL Server compatibility
             datetime_columns = df_copy.select_dtypes(include=['datetime64']).columns
             for col in datetime_columns:
-                # Convert to datetime2 compatible format
-                df_copy[col] = pd.to_datetime(df_copy[col], utc=True)
+                if df_copy[col].dt.tz is None:
+                    df_copy[col] = df_copy[col].dt.tz_localize('UTC')
+                else:
+                    df_copy[col] = df_copy[col].dt.tz_convert('UTC')
             
-            # Handle problematic columns that might cause SQL Server issues
-            for col in df_copy.columns:
-                if df_copy[col].dtype == 'object':
-                    # Handle None values in string columns
-                    df_copy[col] = df_copy[col].astype(str)
-                    df_copy[col] = df_copy[col].replace('None', None)
+            # Handle boolean columns (convert True/False to 1/0 for SQL Server BIT type)
+            boolean_columns = ['thumbs', 'default_brain']  # Add known boolean columns
+            for col in boolean_columns:
+                if col in df_copy.columns:
+                    df_copy[col] = df_copy[col].apply(lambda x: 1 if x else 0 if pd.notna(x) else None)
             
             # Add ETL metadata column
             df_copy['etl_inserted_at'] = pd.Timestamp.now(tz='UTC')
             
+            # Create comprehensive data type mapping for SQL Server
+            dtype_mapping = {}
+            
+            # Map all datetime columns to DateTime to avoid TIMESTAMP issues
+            for col in df_copy.columns:
+                if df_copy[col].dtype.name.startswith('datetime'):
+                    # Use DateTime instead of DATETIME2 to avoid SQL Server TIMESTAMP issues
+                    dtype_mapping[col] = sqlalchemy.types.DateTime()
+                elif col in ['id', 'user_id', 'brain_id', 'chat_id', 'message_id', 'prompt_id', 'parent_id']:
+                    # Map UUID columns properly - use String with exact length for UNIQUEIDENTIFIER
+                    dtype_mapping[col] = sqlalchemy.types.String(36)
+                elif col in boolean_columns:
+                    # Map boolean columns to BIT
+                    dtype_mapping[col] = sqlalchemy.types.Boolean()
+                elif col in ['user_message', 'assistant']:
+                    # Map text columns to NVARCHAR(MAX) explicitly for Vietnamese support
+                    dtype_mapping[col] = sqlalchemy.types.UnicodeText()
+            
+            # Handle UUID columns - ensure proper string format and handle NULLs
+            uuid_columns = ['id', 'user_id', 'brain_id', 'chat_id', 'message_id', 'prompt_id', 'parent_id']
+            for col in uuid_columns:
+                if col in df_copy.columns:
+                    # Convert UUID objects to string format and handle NULLs
+                    df_copy[col] = df_copy[col].apply(
+                        lambda x: str(x) if x is not None and pd.notna(x) else None
+                    )
+            
+            # For chat_history table, use small batch processing to handle Vietnamese characters
+            if table_name == 'chat_history':
+                return self._process_chat_history_with_small_batches(df_copy, table_name, primary_keys, schema, dtype_mapping)
+            
             logger.info(f"Upserting {len(df_copy)} rows into {schema}.{table_name}")
             
-            # Create temporary table with same structure
-            temp_table = f"temp_{table_name}_{int(time.time())}"
+            # Generate unique temp table name for merge operation
+            import random
+            temp_table_name = f"temp_{table_name}_{random.randint(100000, 999999)}"
             
-            # First, insert into temporary table
+            # Insert data into temp table first
             rows_inserted = df_copy.to_sql(
-                name=temp_table,
+                name=temp_table_name,
                 con=self.engine,
                 schema=schema,
                 if_exists='replace',
                 index=False,
-                method="multi",
-                chunksize=self.config.BATCH_SIZE
+                dtype=dtype_mapping,
+                method='multi',
+                chunksize=1000
             )
             
-            # Build MERGE statement
+            # Generate MERGE statement
+            target_table = f"[{schema}].[{table_name}]"
+            source_table = f"[{schema}].[{temp_table_name}]"
+            
+            # Build column lists
             columns = [col for col in df_copy.columns if col != 'etl_inserted_at']
-            pk_condition = " AND ".join([f"target.[{pk}] = source.[{pk}]" for pk in primary_keys])
+            key_conditions = " AND ".join([f"target.[{pk}] = source.[{pk}]" for pk in primary_keys])
             
-            update_set = ", ".join([f"target.[{col}] = source.[{col}]" for col in columns if col not in primary_keys])
-            update_set += ", target.[etl_inserted_at] = source.[etl_inserted_at]"
+            # Build UPDATE SET clause (exclude primary keys and etl timestamp)
+            update_columns = [col for col in columns if col not in primary_keys]
+            update_set = ", ".join([f"target.[{col}] = source.[{col}]" for col in update_columns])
             
-            insert_columns = ", ".join([f"[{col}]" for col in df_copy.columns])
-            insert_values = ", ".join([f"source.[{col}]" for col in df_copy.columns])
+            # Build INSERT columns and values
+            all_columns = columns + ['etl_inserted_at']
+            insert_columns = ", ".join([f"[{col}]" for col in all_columns])
+            insert_values = ", ".join([f"source.[{col}]" for col in all_columns])
             
+            # MERGE statement
             merge_sql = f"""
-                MERGE [{schema}].[{table_name}] AS target
-                USING [{schema}].[{temp_table}] AS source
-                ON {pk_condition}
-                WHEN MATCHED THEN
-                    UPDATE SET {update_set}
-                WHEN NOT MATCHED THEN
-                    INSERT ({insert_columns})
-                    VALUES ({insert_values});
+            MERGE {target_table} AS target
+            USING {source_table} AS source
+            ON ({key_conditions})
+            WHEN MATCHED THEN
+                UPDATE SET {update_set}, [etl_inserted_at] = source.[etl_inserted_at]
+            WHEN NOT MATCHED THEN
+                INSERT ({insert_columns})
+                VALUES ({insert_values});
             """
             
-            # Execute MERGE statement
-            with self.engine.connect() as conn:
+            # Execute MERGE
+            with self.engine.begin() as conn:
                 result = conn.execute(text(merge_sql))
-                conn.commit()
+                
+            # Clean up temp table
+            with self.engine.begin() as conn:
+                conn.execute(text(f"DROP TABLE {source_table}"))
             
-            # Drop temporary table
-            drop_sql = f"DROP TABLE [{schema}].[{temp_table}]"
-            with self.engine.connect() as conn:
-                conn.execute(text(drop_sql))
-                conn.commit()
-            
-            logger.info(f"✓ Successfully upserted {len(df_copy)} rows into {schema}.{table_name}")
-            return len(df_copy)
+            logger.info(f"✓ Successfully upserted {rows_inserted} rows into {schema}.{table_name}")
+            return rows_inserted
             
         except Exception as e:
             logger.error(f"Failed to bulk upsert into {table_name}: {e}")
-            # Try to clean up temp table if it exists
+            # Clean up temp table if it exists
             try:
-                drop_sql = f"DROP TABLE [{schema}].[{temp_table}]"
-                with self.engine.connect() as conn:
-                    conn.execute(text(drop_sql))
+                with self.engine.begin() as conn:
+                    conn.execute(text(f"DROP TABLE IF EXISTS [{schema}].[{temp_table_name}]"))
             except:
                 pass
             raise
+    
+    def _process_chat_history_with_small_batches(self, df: pd.DataFrame, table_name: str, 
+                                               primary_keys: list[str], schema: str, dtype_mapping: dict) -> int:
+        """Process chat_history with small batches to handle Vietnamese encoding issues"""
+        logger.info(f"Processing chat_history with small batches due to Vietnamese encoding concerns")
+        
+        # Handle UUID columns before processing - ensure proper string format and handle NULLs
+        uuid_columns = ['id', 'user_id', 'brain_id', 'chat_id', 'message_id', 'prompt_id', 'parent_id']
+        for col in uuid_columns:
+            if col in df.columns:
+                # Convert UUID objects to string format and handle NULLs
+                df[col] = df[col].apply(
+                    lambda x: str(x) if x is not None and pd.notna(x) else None
+                )
+        
+        batch_size = 5  # Even smaller batches for ultra-conservative processing
+        total_rows = len(df)
+        successful_rows = 0
+        failed_batches = []
+        
+        logger.info(f"Processing {total_rows} chat_history records in batches of {batch_size}")
+        
+        for i in range(0, total_rows, batch_size):
+            batch_df = df.iloc[i:i+batch_size].copy()
+            batch_num = i // batch_size + 1
+            total_batches = (total_rows + batch_size - 1) // batch_size
+            
+            logger.info(f"Processing batch {batch_num}/{total_batches} ({len(batch_df)} rows)")
+            
+            try:
+                # Generate unique temp table name for this batch
+                import random
+                temp_table_name = f"temp_{table_name}_{random.randint(100000, 999999)}"
+                
+                # Try to insert this batch
+                rows_inserted = batch_df.to_sql(
+                    name=temp_table_name,
+                    con=self.engine,
+                    schema=schema,
+                    if_exists='replace',
+                    index=False,
+                    dtype=dtype_mapping,
+                    method='multi',
+                    chunksize=batch_size
+                )
+                
+                # If successful, perform merge operation
+                target_table = f"[{schema}].[{table_name}]"
+                source_table = f"[{schema}].[{temp_table_name}]"
+                
+                # Build merge statement (same as above but for smaller batch)
+                columns = [col for col in batch_df.columns if col != 'etl_inserted_at']
+                key_conditions = " AND ".join([f"target.[{pk}] = source.[{pk}]" for pk in primary_keys])
+                update_columns = [col for col in columns if col not in primary_keys]
+                update_set = ", ".join([f"target.[{col}] = source.[{col}]" for col in update_columns])
+                all_columns = columns + ['etl_inserted_at']
+                insert_columns = ", ".join([f"[{col}]" for col in all_columns])
+                insert_values = ", ".join([f"source.[{col}]" for col in all_columns])
+                
+                merge_sql = f"""
+                MERGE {target_table} AS target
+                USING {source_table} AS source
+                ON ({key_conditions})
+                WHEN MATCHED THEN
+                    UPDATE SET {update_set}, [etl_inserted_at] = source.[etl_inserted_at]
+                WHEN NOT MATCHED THEN
+                    INSERT ({insert_columns})
+                    VALUES ({insert_values});
+                """
+                
+                with self.engine.begin() as conn:
+                    result = conn.execute(text(merge_sql))
+                
+                # Clean up temp table
+                with self.engine.begin() as conn:
+                    conn.execute(text(f"DROP TABLE {source_table}"))
+                
+                successful_rows += len(batch_df)
+                logger.info(f"✓ Batch {batch_num} successful ({len(batch_df)} rows)")
+                
+            except Exception as e:
+                logger.error(f"✗ Batch {batch_num} failed: {e}")
+                failed_batches.append({
+                    'batch_num': batch_num,
+                    'start_idx': i,
+                    'end_idx': min(i + batch_size, total_rows),
+                    'error': str(e),
+                    'message_ids': batch_df.get('message_id', []).tolist()[:3]  # Log first 3 message IDs
+                })
+                
+                # Clean up temp table if it exists
+                try:
+                    with self.engine.begin() as conn:
+                        conn.execute(text(f"DROP TABLE IF EXISTS [{schema}].[{temp_table_name}]"))
+                except:
+                    pass
+        
+        # Log summary
+        logger.info(f"Chat history batch processing complete: {successful_rows}/{total_rows} rows successful")
+        if failed_batches:
+            logger.warning(f"Failed batches: {len(failed_batches)}")
+            for batch_info in failed_batches[:5]:  # Log first 5 failed batches
+                logger.warning(f"Batch {batch_info['batch_num']}: {batch_info['error'][:100]}...")
+        
+        return successful_rows
     
     def truncate_table(self, table_name: str, schema: str = "dwh"):
         """Truncate a table"""

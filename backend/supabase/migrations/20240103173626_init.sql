@@ -181,8 +181,8 @@ create table "public"."user_identity" (
 create table "public"."user_settings" (
     "user_id" uuid not null,
     "models" jsonb default '["gpt-3.5-turbo-1106"]'::jsonb,
-    "daily_chat_credit" integer default 20,
-    "max_brains" integer default 3,
+    "daily_chat_credit" integer default 1000,
+    "max_brains" integer default 100,
     "max_brain_size" integer default 1000000
 );
 
@@ -550,7 +550,7 @@ BEGIN
 
         UPDATE user_settings
         SET
-            max_brains = 30,
+            max_brains = 100,
             max_brain_size = 10000000,
             models = NEW.models
         WHERE user_id = NEW.user_id;
@@ -595,7 +595,7 @@ BEGIN
 
         UPDATE user_settings
         SET
-            max_brains = 30,
+            max_brains = 100,
             max_brain_size = 100000000,
 
             models = NEW.models
@@ -1897,8 +1897,8 @@ $$ LANGUAGE plpgsql;
 CREATE TABLE IF NOT EXISTS user_settings (
   user_id UUID PRIMARY KEY,
   models JSONB DEFAULT '["gpt-3.5-turbo-1106","gpt-4"]'::jsonb,
-  daily_chat_credit INT DEFAULT 300,
-  max_brains INT DEFAULT 30,
+  daily_chat_credit INT DEFAULT 1000,
+  max_brains INT DEFAULT 100,
   max_brain_size INT DEFAULT 100000000
 );
 

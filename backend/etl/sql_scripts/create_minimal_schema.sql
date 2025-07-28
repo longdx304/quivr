@@ -195,13 +195,12 @@ BEGIN
     CREATE TABLE [dwh].[chat_history] (
         [message_id] UNIQUEIDENTIFIER PRIMARY KEY,
         [chat_id] UNIQUEIDENTIFIER NOT NULL,
-        [user_message] NVARCHAR(MAX),
-        [assistant] NVARCHAR(MAX),
+        [user_message] NVARCHAR(MAX) COLLATE Vietnamese_CI_AI,
+        [assistant] NVARCHAR(MAX) COLLATE Vietnamese_CI_AI,
         [message_time] DATETIME2(7),
         [brain_id] UNIQUEIDENTIFIER,
         [prompt_id] UNIQUEIDENTIFIER,
-        [metadata] NVARCHAR(MAX),
-        [thumbs] NVARCHAR(50),
+        [thumbs] BIT,
         [etl_inserted_at] DATETIME2(7) DEFAULT GETUTCDATE()
     )
     PRINT 'Created table: dwh.chat_history'

@@ -146,9 +146,9 @@ BEGIN
 
         UPDATE user_settings
         SET
-            max_brains = 30,
+            max_brains = 100,
             max_brain_size = 100000000,
-            daily_chat_credit = 200,
+            daily_chat_credit = 1000,
             models = NEW.models
         WHERE user_id = NEW.user_id;
     END IF;
