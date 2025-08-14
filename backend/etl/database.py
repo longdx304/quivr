@@ -270,28 +270,35 @@ class SQLServerConnection:
     def create_database_if_not_exists(self):
         """Create data warehouse database if it doesn't exist"""
         try:
-            # Connect to master database first with autocommit
-            master_url = self.config.sqlserver_url.replace(f"/{self.config.SQLSERVER_DATABASE}", "/master")
-            master_engine = create_engine(
-                master_url,
-                connect_args={"autocommit": True}
+            import pyodbc
+            
+            # Build connection string for master database with autocommit
+            connection_string = (
+                f"DRIVER={{{self.config.SQLSERVER_DRIVER}}};"
+                f"SERVER={self.config.SQLSERVER_HOST},{self.config.SQLSERVER_PORT};"
+                f"DATABASE=master;"
+                f"UID={self.config.SQLSERVER_USER};"
+                f"PWD={self.config.SQLSERVER_PASSWORD};"
+                f"TrustServerCertificate=yes;"
+                f"Encrypt=no;"
             )
             
-            with master_engine.connect() as conn:
+            # Use direct pyodbc connection with autocommit for DDL operations
+            with pyodbc.connect(connection_string, autocommit=True) as conn:
+                cursor = conn.cursor()
+                
                 # Check if database exists
-                result = conn.execute(text(f"""
+                cursor.execute(f"""
                     SELECT name FROM sys.databases 
                     WHERE name = '{self.config.SQLSERVER_DATABASE}'
-                """))
+                """)
                 
-                if not result.fetchone():
-                    # Create database (autocommit handles transaction)
-                    conn.execute(text(f"CREATE DATABASE [{self.config.SQLSERVER_DATABASE}]"))
+                if not cursor.fetchone():
+                    # Create database
+                    cursor.execute(f"CREATE DATABASE [{self.config.SQLSERVER_DATABASE}]")
                     logger.info(f"Created database: {self.config.SQLSERVER_DATABASE}")
                 else:
                     logger.info(f"Database {self.config.SQLSERVER_DATABASE} already exists")
-            
-            master_engine.dispose()
             
         except Exception as e:
             logger.error(f"Failed to create database: {e}")

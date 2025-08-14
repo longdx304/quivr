@@ -18,91 +18,91 @@ import { useBrainManagement } from "./hooks/useBrainManagement";
 import styles from "./page.module.scss";
 
 const BrainsManagement = (): JSX.Element => {
-	const { t } = useTranslation(["translation", "brain", "knowledge"]);
+  const { t } = useTranslation(["translation", "brain", "knowledge"]);
 
-	const { brain } = useBrainManagement();
-	const { setIsVisible } = useSearchModalContext();
-	const {
-		handleUnsubscribeOrDeleteBrain,
-		isDeleteOrUnsubscribeModalOpened,
-		setIsDeleteOrUnsubscribeModalOpened,
-		isDeleteOrUnsubscribeRequestPending,
-	} = useBrainManagementTabs(brain?.id);
-	const { allBrains } = useBrainContext();
-	const { isOwnedByCurrentUser } = getBrainPermissions({
-		brainId: brain?.id,
-		userAccessibleBrains: allBrains,
-	});
-	const { setShouldDisplayFeedCard } = useKnowledgeToFeedContext();
-	const { setCurrentBrainId } = useBrainContext();
+  const { brain } = useBrainManagement();
+  const { setIsVisible } = useSearchModalContext();
+  const {
+    handleUnsubscribeOrDeleteBrain,
+    isDeleteOrUnsubscribeModalOpened,
+    setIsDeleteOrUnsubscribeModalOpened,
+    isDeleteOrUnsubscribeRequestPending,
+  } = useBrainManagementTabs(brain?.id);
+  const { allBrains } = useBrainContext();
+  const { isOwnedByCurrentUser } = getBrainPermissions({
+    brainId: brain?.id,
+    userAccessibleBrains: allBrains,
+  });
+  const { setShouldDisplayFeedCard } = useKnowledgeToFeedContext();
+  const { setCurrentBrainId } = useBrainContext();
 
-	const buttons: ButtonType[] = [
-		{
-			label: t("talkButton", { ns: "brain" }),
-			color: "primary",
-			onClick: () => {
-				if (brain) {
-					setIsVisible(true);
-					setTimeout(() => setCurrentBrainId(brain.id));
-				}
-			},
-			iconName: "chat",
-		},
-		{
-			label: t("addKnowledgeTitle", { ns: "knowledge" }),
-			color: "primary",
-			onClick: () => {
-				setShouldDisplayFeedCard(true);
-			},
-			iconName: "uploadFile",
-			hidden: !isOwnedByCurrentUser || !brain?.max_files,
-		},
-		{
-			label: isOwnedByCurrentUser ? t("deleteBrain", { ns: "brain" }) : t("unsubscribe_brain", { ns: "brain" }),
-			color: "dangerous",
-			onClick: () => {
-				setIsDeleteOrUnsubscribeModalOpened(true);
-			},
-			iconName: "delete",
-		},
-	];
+  const buttons: ButtonType[] = [
+    {
+      label: t("talkButton", { ns: "brain" }),
+      color: "primary",
+      onClick: () => {
+        if (brain) {
+          setIsVisible(true);
+          setTimeout(() => setCurrentBrainId(brain.id));
+        }
+      },
+      iconName: "chat",
+    },
+    {
+      label: t("addKnowledgeTitle", { ns: "knowledge" }),
+      color: "primary",
+      onClick: () => {
+        setShouldDisplayFeedCard(true);
+      },
+      iconName: "uploadFile",
+      hidden: !isOwnedByCurrentUser || !brain?.max_files,
+    },
+    // {
+    // 	label: isOwnedByCurrentUser ? t("deleteBrain", { ns: "brain" }) : t("unsubscribe_brain", { ns: "brain" }),
+    // 	color: "dangerous",
+    // 	onClick: () => {
+    // 		setIsDeleteOrUnsubscribeModalOpened(true);
+    // 	},
+    // 	iconName: "delete",
+    // },
+  ];
 
-	useEffect(() => {
-		if (brain) {
-			setCurrentBrainId(brain.id);
-		}
-	}, [brain]);
+  useEffect(() => {
+    if (brain) {
+      setCurrentBrainId(brain.id);
+    }
+  }, [brain]);
 
-	if (!brain) {
-		return <></>;
-	}
+  if (!brain) {
+    return <></>;
+  }
 
-	return (
-		<>
-			<div className={styles.brain_management_wrapper}>
-				<PageHeader
-					iconName="brain"
-					label={brain.name}
-					buttons={buttons}
-					snippetEmoji={brain.snippet_emoji}
-					snippetColor={brain.snippet_color}
-				/>
-				<div className={styles.content_wrapper}>
-					<BrainManagementTabs />
-				</div>
-			</div>
-			<UploadDocumentModal />
-			<DeleteOrUnsubscribeConfirmationModal
-				isOpen={isDeleteOrUnsubscribeModalOpened}
-				setOpen={setIsDeleteOrUnsubscribeModalOpened}
-				onConfirm={() => void handleUnsubscribeOrDeleteBrain()}
-				isOwnedByCurrentUser={isOwnedByCurrentUser}
-				isDeleteOrUnsubscribeRequestPending={
-					isDeleteOrUnsubscribeRequestPending
-				}
-			/>
-		</>
-	);
+  return (
+    <>
+      <div className={styles.brain_management_wrapper}>
+        <PageHeader
+          iconName="brain"
+          label={brain.name}
+          buttons={buttons}
+          snippetEmoji={brain.snippet_emoji}
+          snippetColor={brain.snippet_color}
+        />
+        <div className={styles.content_wrapper}>
+          <BrainManagementTabs />
+        </div>
+      </div>
+      <UploadDocumentModal />
+      <DeleteOrUnsubscribeConfirmationModal
+        isOpen={isDeleteOrUnsubscribeModalOpened}
+        setOpen={setIsDeleteOrUnsubscribeModalOpened}
+        onConfirm={() => void handleUnsubscribeOrDeleteBrain()}
+        isOwnedByCurrentUser={isOwnedByCurrentUser}
+        isDeleteOrUnsubscribeRequestPending={
+          isDeleteOrUnsubscribeRequestPending
+        }
+      />
+    </>
+  );
 };
 
 export default BrainsManagement;

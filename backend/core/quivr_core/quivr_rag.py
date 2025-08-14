@@ -66,8 +66,14 @@ class QuivrQARAG:
     def retriever(self):
         """
         Retriever is a function that retrieves the documents from the vector store.
+        Configured with strict similarity threshold for semantic relevance.
         """
-        return self.vector_store.as_retriever()
+        return self.vector_store.as_retriever(
+            search_kwargs={
+                "k": 20,  # Retrieve more candidates for better filtering
+                "threshold": 0.7,  # Strict similarity threshold
+            }
+        )
 
     def filter_history(
         self,

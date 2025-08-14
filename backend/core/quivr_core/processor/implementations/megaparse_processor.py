@@ -2,6 +2,7 @@ import logging
 import hashlib
 import os
 from pathlib import Path
+from typing import List
  
 import tiktoken
 from langchain_core.documents import Document
@@ -17,8 +18,88 @@ from quivr_core.processor.registry import FileExtension
 from quivr_core.processor.splitter import SplitterConfig, SemanticSplitterConfig
  
 logger = logging.getLogger("quivr_core")
- 
- 
+
+
+class SafeSemanticChunker:
+    """
+    A wrapper around SemanticChunker that safely handles large documents
+    by pre-chunking them when they exceed embedding API token limits.
+    """
+    
+    def __init__(self, semantic_chunker: SemanticChunker, max_tokens: int = 250000):
+        self.semantic_chunker = semantic_chunker
+        self.max_tokens = max_tokens
+        self.enc = tiktoken.get_encoding("cl100k_base")
+    
+    def split_documents(self, documents: List[Document]) -> List[Document]:
+        """Split documents safely, handling token limits."""
+        all_chunks = []
+        
+        for doc in documents:
+            token_count = len(self.enc.encode(doc.page_content))
+            
+            if token_count <= self.max_tokens:
+                # Safe to process with semantic chunker
+                try:
+                    chunks = self.semantic_chunker.split_documents([doc])
+                    all_chunks.extend(chunks)
+                except Exception as e:
+                    logger.warning(f"Semantic chunking failed for document (safe size): {e}. Using recursive fallback.")
+                    chunks = self._fallback_split(doc)
+                    all_chunks.extend(chunks)
+            else:
+                logger.info(f"Document too large ({token_count} tokens), pre-chunking before semantic analysis")
+                # Pre-chunk into smaller pieces
+                pre_chunks = self._pre_chunk_document(doc)
+                
+                for pre_chunk in pre_chunks:
+                    try:
+                        semantic_chunks = self.semantic_chunker.split_documents([pre_chunk])
+                        all_chunks.extend(semantic_chunks)
+                    except Exception as e:
+                        logger.warning(f"Semantic chunking failed for pre-chunk: {e}. Using recursive fallback.")
+                        fallback_chunks = self._fallback_split(pre_chunk)
+                        all_chunks.extend(fallback_chunks)
+        
+        return all_chunks
+    
+    def _pre_chunk_document(self, document: Document) -> List[Document]:
+        """Pre-chunk large document into smaller pieces for semantic processing."""
+        # Use a conservative chunk size (half the max limit)
+        # safe_chunk_size = self.max_tokens // 2
+        safe_chunk_size = 1500
+        
+        pre_chunker = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+            chunk_size=safe_chunk_size,
+            chunk_overlap=300,  # Small overlap to maintain context
+            separators=[
+                "\n\n\n",  # Section breaks
+                "\n\n",    # Paragraph breaks
+                "\n",      # Line breaks
+                ". ",      # Sentence endings
+                "? ",      # Questions
+                "! ",      # Exclamations
+                "; ",      # Semicolons
+                ", ",      # Commas (last resort)
+                " ",       # Spaces
+                ""         # Character level
+            ],
+            keep_separator=True,
+        )
+        
+        return pre_chunker.split_documents([document])
+    
+    def _fallback_split(self, document: Document) -> List[Document]:
+        """Fallback recursive splitting when semantic chunking fails."""
+        fallback_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+            chunk_size=1500,  # Conservative chunk size
+            chunk_overlap=300,
+            separators=["\n\n\n", "\n\n", "\n", ". ", "? ", "! ", "; ", ", ", " ", ""],
+            keep_separator=True,
+        )
+        return fallback_splitter.split_documents([document])
+
+
 class MegaparseProcessor(ProcessorBase):
     """
     Megaparse processor for PDF files.
@@ -64,7 +145,7 @@ class MegaparseProcessor(ProcessorBase):
                     embeddings = OpenAIEmbeddings()
                 
                 # Configure semantic chunker with advanced settings
-                self.text_splitter = SemanticChunker(
+                semantic_chunker = SemanticChunker(
                     embeddings=embeddings,
                     buffer_size=splitter_config.buffer_size,
                     add_start_index=True,
@@ -73,7 +154,10 @@ class MegaparseProcessor(ProcessorBase):
                     # Add sentence split regex for better Vietnamese/multilingual support
                     sentence_split_regex=r'(?<=[.!?;])\s+|(?<=[。！？；])\s+|(?<=\.)\s+'
                 )
-                logger.info(f"Semantic chunker initialized with buffer_size={splitter_config.buffer_size}, threshold={splitter_config.breakpoint_threshold}")
+                
+                # Wrap with safe chunker to handle large documents
+                self.text_splitter = SafeSemanticChunker(semantic_chunker, max_tokens=250000)
+                logger.info(f"Safe semantic chunker initialized with buffer_size={splitter_config.buffer_size}, threshold={splitter_config.breakpoint_threshold}")
             else:
                 # Fallback to enhanced recursive character text splitter
                 logger.info("Using enhanced recursive character text splitting")
@@ -194,35 +278,7 @@ class MegaparseProcessor(ProcessorBase):
         token_count = len(self.enc.encode(document.page_content))
         
         if token_count > self.splitter_config.chunk_size:
-            docs = self.text_splitter.split_documents([document])
-            
-            # Add chunk-specific metadata to each chunk
-            for i, doc in enumerate(docs):
-                # Preserve all document-level metadata
-                doc.metadata.update(enhanced_metadata)
-                
-                # Add chunk-specific metadata
-                chunk_token_count = len(self.enc.encode(doc.page_content))
-                doc.metadata.update({
-                    "chunk_size": chunk_token_count,
-                    "chunk_index": i,
-                    "total_chunks": len(docs),
-                    "chunk_position": f"{i+1}/{len(docs)}",
-                    "is_first_chunk": i == 0,
-                    "is_last_chunk": i == len(docs) - 1,
-                })
-                
-                # Add context about the chunk's position in the document
-                if i == 0:
-                    doc.metadata["chunk_type"] = "document_start"
-                elif i == len(docs) - 1:
-                    doc.metadata["chunk_type"] = "document_end"
-                else:
-                    doc.metadata["chunk_type"] = "document_middle"
-                
-                # Add a unique identifier combining source and chunk
-                doc.metadata["chunk_id"] = f"{enhanced_metadata['content_hash']}_chunk_{i}"
-            
+            docs = self._split_document_safely(document, enhanced_metadata)
             return docs
         else:
             # If the document is smaller than chunk_size, return it as a single chunk
@@ -237,4 +293,58 @@ class MegaparseProcessor(ProcessorBase):
                 "chunk_id": f"{enhanced_metadata['content_hash']}_chunk_0",
             })
             return [document]
+    
+    def _split_document_safely(self, document: Document, enhanced_metadata: dict) -> list[Document]:
+        """
+        Split documents safely using the configured text splitter.
+        The SafeSemanticChunker wrapper handles token limits automatically.
+        """
+        try:
+            # Use the configured text splitter (which may be SafeSemanticChunker or RecursiveCharacterTextSplitter)
+            docs = self.text_splitter.split_documents([document])
+            
+        except Exception as e:
+            logger.error(f"Document splitting failed with error: {e}. Using fallback recursive chunking.")
+            
+            # Final fallback to basic recursive chunking
+            fallback_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+                chunk_size=self.splitter_config.chunk_size,
+                chunk_overlap=self.splitter_config.chunk_overlap,
+                separators=["\n\n\n", "\n\n", "\n", ". ", "? ", "! ", "; ", ", ", " ", ""],
+                keep_separator=True,
+            )
+            docs = fallback_splitter.split_documents([document])
+            
+            # Update metadata to indicate fallback was used
+            enhanced_metadata["chunking_fallback_used"] = True
+            enhanced_metadata["fallback_reason"] = str(e)
+        
+        # Add chunk-specific metadata to each chunk
+        for i, doc in enumerate(docs):
+            # Preserve all document-level metadata
+            doc.metadata.update(enhanced_metadata)
+            
+            # Add chunk-specific metadata
+            chunk_token_count = len(self.enc.encode(doc.page_content))
+            doc.metadata.update({
+                "chunk_size": chunk_token_count,
+                "chunk_index": i,
+                "total_chunks": len(docs),
+                "chunk_position": f"{i+1}/{len(docs)}",
+                "is_first_chunk": i == 0,
+                "is_last_chunk": i == len(docs) - 1,
+            })
+            
+            # Add context about the chunk's position in the document
+            if i == 0:
+                doc.metadata["chunk_type"] = "document_start"
+            elif i == len(docs) - 1:
+                doc.metadata["chunk_type"] = "document_end"
+            else:
+                doc.metadata["chunk_type"] = "document_middle"
+            
+            # Add a unique identifier combining source and chunk
+            doc.metadata["chunk_id"] = f"{enhanced_metadata['content_hash']}_chunk_{i}"
+        
+        return docs
  
