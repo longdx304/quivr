@@ -38,6 +38,7 @@ export const NotificationsProvider = ({
   const { supabase } = useSupabase();
 
   const fetchNotifications = async (): Promise<NotificationType[]> => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
     const { data, error } = await supabase.from("notifications").select();
 
     return error ? [] : (data as NotificationType[]);

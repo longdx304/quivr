@@ -27,6 +27,7 @@ export const GenericNotification = ({
   };
 
   const deleteNotification = async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
     await supabase
       .from("notifications")
       .delete()

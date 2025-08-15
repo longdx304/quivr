@@ -8,7 +8,7 @@ import { useUserApi } from "@/lib/api/user/useUserApi";
 import { UserIdentity } from "@/lib/api/user/user";
 import { Icon } from "@/lib/components/ui/Icon/Icon";
 import Spinner from "@/lib/components/ui/Spinner";
-import Table from "@/lib/components/ui/Table/Table";
+import { Table } from "@/lib/components/ui/Table/Table";
 
 import styles from "./ListAllUsers.module.scss";
 import { UserModals } from "./UserModals";
