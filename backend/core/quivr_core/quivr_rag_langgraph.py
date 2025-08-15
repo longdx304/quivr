@@ -9,7 +9,7 @@ from langchain_cohere import CohereRerank
 from langchain_community.document_compressors import JinaRerank
 from langchain_core.callbacks import Callbacks
 from langchain_core.documents import BaseDocumentCompressor, Document
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import BaseMessage, AIMessage
 from langchain_core.messages.ai import AIMessageChunk
 from langchain_core.vectorstores import VectorStore
 from langgraph.graph import END, START, StateGraph
@@ -112,19 +112,27 @@ class QuivrQARAGLangGraph:
 
         if self.vector_store:
             self.compression_retriever = ContextualCompressionRetriever(
-                base_compressor=self.reranker, base_retriever=self.retriever
+                base_compressor=self.reranker,
+                base_retriever=self.retriever
             )
 
     @property
     def retriever(self):
         """
         Returns a retriever that can retrieve documents from the vector store.
+        Configured with strict similarity threshold for semantic relevance.
 
         Returns:
-            VectorStoreRetriever: The retriever.
+            VectorStoreRetriever: The retriever with strict relevance filtering.
         """
         if self.vector_store:
-            return self.vector_store.as_retriever()
+            # Default strict retriever; fallbacks will adjust if empty
+            return self.vector_store.as_retriever(
+                search_kwargs={
+                    "k": 50,
+                    "threshold": 0.7,
+                }
+            )
         else:
             raise ValueError("No vector store provided")
 
@@ -188,16 +196,36 @@ class QuivrQARAGLangGraph:
 
     def retrieve(self, state):
         """
-        Retrieve relevent chunks
+        Retrieve relevant chunks with strict relevance filtering
 
         Args:
             state (messages): The current state
 
         Returns:
-            dict: The retrieved chunks
+            dict: The retrieved chunks (empty if no relevant documents found)
         """
         question = state["messages"][-1].content
+        # Try strict search first
         docs = self.compression_retriever.invoke(question)
+        logger.info(
+            f"Retrieved {len(docs)} documents at threshold=0.7 k=40 for query: {question[:100]}..."
+        )
+        
+        # Fallback 1: lower threshold, increase k
+        if not docs or len(docs) == 0:
+            try:
+                fallback_retriever = self.vector_store.as_retriever(
+                    search_kwargs={"k": 70, "threshold": 0.55}
+                )
+                fallback_ccr = ContextualCompressionRetriever(
+                    base_compressor=self.reranker, base_retriever=fallback_retriever
+                )
+                docs = fallback_ccr.invoke(question)
+                logger.info(
+                    f"Fallback threshold=0.6 k=70 returned {len(docs)} documents for query: {question[:100]}..."
+                )
+            except Exception as e:
+                logger.warning(f"Fallback 0.6 failed: {e}")
         return {"docs": docs}
 
     def generate_rag(self, state):
@@ -213,8 +241,20 @@ class QuivrQARAGLangGraph:
         messages = state["messages"]
         user_question = messages[0].content
         files = state["files"]
+        logger.info(f"Files: {files}")
 
         docs = state["docs"]
+        logger.info(f"Docs: {docs}")
+        # Check if docs is empty and return appropriate response
+        if not docs or len(docs) == 0:
+            no_info_response = AIMessage(
+                content="Tôi không có thông tin để trả lời câu hỏi của bạn. Vui lòng cung cấp thêm thông tin hoặc tài liệu để tôi có thể hỗ trợ bạn tốt hơn."
+            )
+            formatted_response = {
+                "answer": no_info_response,
+                "docs": [],
+            }
+            return {"messages": [no_info_response], "final_response": formatted_response}
 
         # Prompt
         prompt = self.retrieval_config.prompt
@@ -314,6 +354,7 @@ class QuivrQARAGLangGraph:
         workflow = StateGraph(AgentState)
 
         if self.retrieval_config.workflow_config:
+            logger.info(f"Using workflow config: {self.retrieval_config.workflow_config}")
             if SpecialEdges.START not in [
                 node.name for node in self.retrieval_config.workflow_config.nodes
             ]:
@@ -331,12 +372,12 @@ class QuivrQARAGLangGraph:
                     else:
                         workflow.add_edge(node.name, edge)
         else:
+            logger.info("No workflow config provided, using default workflow")
             # Define the nodes we will cycle between
             workflow.add_node("filter_history", self.filter_history)
             workflow.add_node("rewrite", self.rewrite)  # Re-writing the question
             workflow.add_node("retrieve", self.retrieve)  # retrieval
             workflow.add_node("generate", self.generate_rag)
-
             # Add node for filtering history
 
             workflow.set_entry_point("filter_history")
@@ -386,6 +427,20 @@ class QuivrQARAGLangGraph:
             inputs,
             config={"metadata": metadata},
         )
+        
+        # Check if the response indicates no docs were found
+        if "final_response" in raw_llm_response and "docs" in raw_llm_response["final_response"]:
+            docs = raw_llm_response["final_response"]["docs"]
+            if not docs or len(docs) == 0:
+                logger.info("No docs found in response, creating fallback response")
+                # Create a fallback response for empty docs case
+                fallback_response = ParsedRAGResponse(
+                    answer="Tôi không có thông tin để trả lời câu hỏi của bạn. Vui lòng cung cấp thêm thông tin hoặc tài liệu để tôi có thể hỗ trợ bạn tốt hơn.",
+                    sources=[],
+                    metadata=RAGResponseMetadata(),
+                )
+                return fallback_response
+        
         response = parse_response(
             raw_llm_response["final_response"], self.retrieval_config.llm_config.model
         )
@@ -477,6 +532,14 @@ class QuivrQARAGLangGraph:
                         yield parsed_chunk
 
                     chunk_id += 1
+
+        logger.info(f"chunk_id: {chunk_id}")
+        # Emit fallback content when no chunks were streamed (e.g., docs == 0)
+        if chunk_id == 0:
+            yield ParsedRAGChunkResponse(
+                answer="Tôi không có thông tin để trả lời câu hỏi của bạn. Vui lòng cung cấp thêm thông tin hoặc tài liệu để tôi có thể hỗ trợ bạn tốt hơn.",
+                metadata=RAGResponseMetadata(),
+            )
 
         # Last chunk provides metadata
         last_chunk = ParsedRAGChunkResponse(

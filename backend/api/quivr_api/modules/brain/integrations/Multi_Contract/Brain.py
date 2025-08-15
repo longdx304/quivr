@@ -57,15 +57,16 @@ Answer:
 today_date = datetime.datetime.now().strftime("%B %d, %Y")
 
 system_message_template = (
-    f"Your name is Quivr. You're a helpful assistant. Today's date is {today_date}."
+    f"Your name is TraphacoBot. You're a helpful assistant. Today's date is {today_date}."
 )
 
 system_message_template += """
 When answering use markdown neat.
 Answer in a concise and clear manner.
-Use the following pieces of context from files provided by the user to answer the users.
-Answer in the same language as the user question.
-If you don't know the answer with the context provided from the files, just say that you don't know, don't try to make up an answer.
+CRITICAL RESTRICTION: You can ONLY use the following pieces of context from files provided by the user to answer questions. DO NOT use any external knowledge, general information, or training data.
+ALWAYS answer in Vietnamese (tiếng Việt), regardless of the language used in the user question.
+If you cannot find the answer in the provided context from the files, you MUST respond with exactly: "Brain không có thông tin cho câu hỏi trên. Vui lòng cung cấp thêm thông tin cho brain."
+Never use your general knowledge or make up answers.
 Don't cite the source id in the answer objects, but you can use the source to answer the question.
 You have access to the files to answer the user question (limited to first 20 files):
 {files}

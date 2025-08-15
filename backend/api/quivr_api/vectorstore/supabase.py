@@ -74,14 +74,14 @@ class CustomSupabaseVectorStore(SupabaseVectorStore):
         query: str,
         k: int = 40,
         table: str = "match_vectors",
-        threshold: float = 0.5,
+        threshold: float = 0.7,  # Increased to 0.7 for stricter relevance
         **kwargs: Any,
     ) -> List[Document]:
-        logger.debug(f"Similarity search for query: {query}")
+        logger.debug(f"Similarity search for query: {query} with threshold: {threshold}")
         assert self.brain_id, "Brain ID is required for similarity search"
 
         match_result = self.vector_service.similarity_search(
-            query, brain_id=self.brain_id, k=k
+            query, brain_id=self.brain_id, k=k, similarity_threshold=threshold
         )
 
         sorted_match_result_by_file_name_metadata = sorted(

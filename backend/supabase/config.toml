@@ -48,7 +48,7 @@ enabled = true
 
 [studio]
 enabled = true
-# Port to use for Supabase Studio.
+# Port to use for Supabase Studio - Internal port, accessed via Nginx proxy on 54323
 port = 54323
 # External URL of the API server that frontend connects to.
 api_url = "http://127.0.0.1"

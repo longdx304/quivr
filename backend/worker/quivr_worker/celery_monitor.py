@@ -90,28 +90,52 @@ async def handler_loop():
 
             if event.status == TaskStatus.SUCCESS:
                 logger.info(
-                    f"task {event.task_id} process_file_task succeeded. Sending notification {event.notification_id}"
+                    f"task {event.task_id} process_file_task succeeded. Updating knowledge status first"
                 )
-                notification_service.update_notification_by_id(
-                    event.notification_id,
-                    NotificationUpdatableProperties(
-                        status=NotificationsStatusEnum.SUCCESS,
-                        description=(
-                            "Your file has been properly uploaded!"
-                            if event.task_name == TaskIdentifier.PROCESS_FILE_TASK
-                            else "Your URL has been properly crawled!"
-                        ),
-                    ),
-                )
+                logger.info(f"event: {event}")
+                # Update knowledge status first - this is critical for data consistency
+                knowledge_updated = False
                 if event.knowledge_id:
-                    await knowledge_service.update_status_knowledge(
-                        knowledge_id=event.knowledge_id,
-                        status=KnowledgeStatus.UPLOADED,
-                        brain_id=event.brain_id,
+                    try:
+                        await knowledge_service.update_status_knowledge(
+                            knowledge_id=event.knowledge_id,
+                            status=KnowledgeStatus.UPLOADED,
+                            brain_id=event.brain_id,
+                        )
+                        knowledge_updated = True
+                        logger.info(
+                            f"task {event.task_id} process_file_task succeeded. Knowledge {event.knowledge_id} updated to UPLOADED"
+                        )
+                    except Exception as e:
+                        logger.error(
+                            f"Failed to update knowledge {event.knowledge_id} status to UPLOADED: {e}"
+                        )
+                        # If knowledge status update fails, treat the whole task as failed
+                        notification_service.update_notification_by_id(
+                            event.notification_id,
+                            NotificationUpdatableProperties(
+                                status=NotificationsStatusEnum.ERROR,
+                                description="An error occurred while updating file status",
+                            ),
+                        )
+                        return
+                
+                # Only send success notification if knowledge status was updated successfully
+                if knowledge_updated or not event.knowledge_id:
+                    logger.info(
+                        f"task {event.task_id} process_file_task succeeded. Sending notification {event.notification_id}"
                     )
-                logger.info(
-                    f"task {event.task_id} process_file_task failed. Updating knowledge {event.knowledge_id} to UPLOADED"
-                )
+                    notification_service.update_notification_by_id(
+                        event.notification_id,
+                        NotificationUpdatableProperties(
+                            status=NotificationsStatusEnum.SUCCESS,
+                            description=(
+                                "Your file has been properly uploaded!"
+                                if event.task_name == TaskIdentifier.PROCESS_FILE_TASK
+                                else "Your URL has been properly crawled!"
+                            ),
+                        ),
+                    )
 
         except Exception as e:
             logger.error(f"Excpetion occured handling event {event}: {e}")

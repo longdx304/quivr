@@ -194,7 +194,7 @@ class RAGService:
     async def generate_answer(
         self,
         question: str,
-        payloadMetadata: dict,
+        payloadMetadata: dict | None = None,
     ):
         logger.info(
             f"Creating question for chat {self.chat_id} with brain {self.brain.brain_id} "
@@ -285,7 +285,7 @@ class RAGService:
     async def generate_answer_stream(
         self,
         question: str,
-        payloadMetadata: dict,
+        payloadMetadata: dict | None = None,
     ):
         logger.info(
             f"Creating question for chat {self.chat_id} with brain {self.brain.brain_id} "

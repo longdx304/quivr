@@ -40,11 +40,14 @@ class VectorService(BaseService[VectorRepository]):
 
         return [vector.id for vector in created_vector if vector.id]
 
-    def similarity_search(self, query: str, brain_id: UUID, k: int = 40):
-        vectors = self._embedding.embed_documents([query])
-        query_embedding = vectors[0]
+    def similarity_search(self, query: str, brain_id: UUID, k: int = 40, similarity_threshold: float = 0.7):
+        # Use query embedding if available; fallback to document embedding API
+        if hasattr(self._embedding, "embed_query"):
+            query_embedding = self._embedding.embed_query(query)
+        else:
+            query_embedding = self._embedding.embed_documents([query])[0]
         vectors = self.repository.similarity_search(
-            query_embedding=query_embedding, brain_id=brain_id, k=k
+            query_embedding=query_embedding, brain_id=brain_id, k=k, similarity_threshold=similarity_threshold
         )
 
         match_result = [

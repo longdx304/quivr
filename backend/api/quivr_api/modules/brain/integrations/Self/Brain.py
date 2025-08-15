@@ -128,7 +128,9 @@ class SelfBrain(KnowledgeBrainQA):
 
     def generation_rag(self):
         # Prompt
-        human_prompt = """You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.
+        human_prompt = """CRITICAL RESTRICTION: You can ONLY use the provided context to answer the question. DO NOT use external knowledge or general information.
+        ALWAYS respond in Vietnamese (tiếng Việt), regardless of the language used in the question.
+        If you cannot find the answer in the provided context, you MUST respond with exactly: "Bộ não không có thông tin cho câu hỏi trên. Vui lòng cung cấp thêm thông tin cho bộ não."
 
         Question: {question} 
 

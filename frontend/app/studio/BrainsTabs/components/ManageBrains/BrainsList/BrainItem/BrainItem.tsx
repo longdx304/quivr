@@ -101,12 +101,12 @@ export const BrainItem = ({ brain, even }: BrainItemProps): JSX.Element => {
       iconColor: "primary",
       disabled: isZaloIntegrating,
     },
-    {
-      label: t("deleteButton", { ns: "brain" }),
-      onClick: () => void setIsDeleteOrUnsubscribeModalOpened(true),
-      iconName: "delete",
-      iconColor: "dangerous",
-    },
+    // {
+    //   label: t("deleteButton", { ns: "brain" }),
+    //   onClick: () => void setIsDeleteOrUnsubscribeModalOpened(true),
+    //   iconName: "delete",
+    //   iconColor: "dangerous",
+    // },
   ];
 
   useEffect(() => {

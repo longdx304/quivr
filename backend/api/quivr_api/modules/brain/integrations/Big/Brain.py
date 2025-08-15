@@ -49,8 +49,9 @@ class BigBrain(KnowledgeBrainQA):
         Returns:
             A ConversationalRetrievalChain instance.
         """
-        system_template = """Combine these summaries in a way that makes sense and answer the user's question.
-        Use markdown or any other techniques to display the content in a nice and aerated way. Answer in the language of the question.
+        system_template = """CRITICAL RESTRICTION: You can ONLY use the provided summaries to answer the user's question. DO NOT use external knowledge or general information.
+        If the summaries do not contain the answer to the user's question, you MUST respond with exactly: "Brain không có thông tin cho câu hỏi trên. Vui lòng cung cấp thêm thông tin cho brain."
+        Use markdown or any other techniques to display the content in a nice and aerated way. ALWAYS answer in Vietnamese (tiếng Việt), regardless of the language used in the question.
         Here are user instructions on how to respond: {custom_personality}
         ______________________
         {summaries}"""
@@ -61,8 +62,8 @@ class BigBrain(KnowledgeBrainQA):
         CHAT_COMBINE_PROMPT = ChatPromptTemplate.from_messages(messages)
 
         ### Question prompt
-        question_prompt_template = """Use the following portion of a long document to see if any of the text is relevant to answer the question. 
-        Return any relevant text verbatim. Return the answer in the same language as the question. If the answer is not in the text, just say nothing in the same language as the question.
+        question_prompt_template = """CRITICAL RESTRICTION: Only use the following portion of a long document to answer the question. DO NOT use any external knowledge.
+        If the text contains relevant information, return it verbatim in Vietnamese (tiếng Việt). If the answer is not in the text, respond with: "Brain không có thông tin cho câu hỏi trên. Vui lòng cung cấp thêm thông tin cho brain."
         {context}
         Question: {question}
         Relevant text, if any, else say Nothing:"""
@@ -72,12 +73,12 @@ class BigBrain(KnowledgeBrainQA):
 
         ### Condense Question Prompt
 
-        _template = """Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question in exactly the same language as the original question.
+        _template = """Given the following conversation and a follow up question, rephrase the follow up question to be a standalone question in Vietnamese (tiếng Việt), regardless of the original question's language.
 
         Chat History:
         {chat_history}
         Follow Up Input: {question}
-        Standalone question in same language as question:"""
+        Standalone question in Vietnamese:"""
         CONDENSE_QUESTION_PROMPT = PromptTemplate.from_template(_template)
 
         api_base = None

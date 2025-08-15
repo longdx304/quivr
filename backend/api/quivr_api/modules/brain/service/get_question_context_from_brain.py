@@ -44,7 +44,7 @@ def get_question_context_from_brain(brain_id: UUID, question: str) -> str:
         number_docs=20,
     )
     documents = vector_store.similarity_search(question, k=20, threshold=0.8)
-
+    logger.info(f"Documents: {documents}")
     answers = []
     file_sha1s = []
     for document in documents:

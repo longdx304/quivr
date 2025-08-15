@@ -724,11 +724,11 @@ INSERT INTO
 VALUES
 	(
 		'39418e3b-0258-4452-af60-7acfcc1263ff',
-		10,
+		100,
 		50000000,
 		false,
 		false,
-		1000,
+		10000,
 		NULL
 	);
 
