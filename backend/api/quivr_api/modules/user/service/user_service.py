@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 from uuid import UUID, uuid4
 from typing import List, Dict, Any
@@ -11,7 +12,6 @@ from quivr_api.modules.dependencies import get_supabase_client
 from quivr_api.logger import get_logger
 from quivr_api.utils.send_email import send_email
 
-import os
 
 logger = get_logger(__name__)
 
@@ -159,24 +159,24 @@ class UserService:
         email: str,
         password: str,
     ):
+        activation_date = datetime.now().strftime("%d/%m/%Y")
         html_body = f"""
-        <p>Chào {fullNameUser},</p>
+        <p>Kính gửi Quý khách,</p>
 
-        <p>Chúng tôi mời bạn tham gia vào <b>Dự án Traphaco</b>.</p>
-
-        <p>Thông tin đăng nhập của bạn:</p>
+        <p>Dưới đây là thông tin tài khoản của bạn được gửi từ hệ thống Traphaco Bot AI tự động của chúng tôi:</p>
 
         <ul>
-            <li><b>Email:</b> {email}</li>
-            <li><b>Password:</b> {password}</li>
+            <li><b>Tên tài khoản:</b> {fullNameUser}</li>
+            <li><b>Email đăng ký:</b> {email}</li>
+            <li><b>Mật khẩu tạm thời:</b> {password} (Vui lòng đổi mật khẩu ngay sau khi đăng nhập)</li>
+            <li><b>Ngày kích hoạt:</b> {activation_date}</li>
+            <li><b>Trạng thái tài khoản:</b> Đã kích hoạt</li>
         </ul>
 
-        <p>Để bắt đầu, vui lòng nhấn vào liên kết dưới đây:</p>
-        <p><a href='{os.getenv("QUIVR_DOMAIN")}' style="color: blue; font-weight: bold;">Bấm vào đây để tham gia Dự án Traphaco</a></p>
+        <p>Để đảm bảo an toàn, vui lòng không chia sẻ thông tin này với bất kỳ ai.</p>
+        <p>Nếu bạn cần hỗ trợ, hãy liên hệ với phòng CNTT - Traphaco hoặc số điện thoại: 0946783295</p>
 
-        <p><b>Lưu ý:</b> Vì lý do bảo mật, hãy thay đổi mật khẩu sau khi đăng nhập lần đầu.</p>
-
-        <p>Trân trọng,<br>Đội ngũ Traphaco</p>
+        <p>Trân trọng,<br><b>Bot AI - TRAPHACO</b></p>
         """
 
         try:
