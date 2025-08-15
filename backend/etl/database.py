@@ -468,7 +468,7 @@ class SQLServerConnection:
             
             # Handle problematic columns that might cause SQL Server issues
             # IMPORTANT: Avoid converting text columns to string as it may override truncation logic
-            text_columns = ['user_message', 'assistant', 'content', 'description', 'name']
+            text_columns = ['content']  # Removed sensitive columns from processing
             for col in df_copy.columns:
                 if df_copy[col].dtype == 'object' and col not in text_columns:
                     # Handle None values in non-text string columns
@@ -499,9 +499,7 @@ class SQLServerConnection:
                 elif col in boolean_columns:
                     # Map boolean columns to BIT
                     dtype_mapping[col] = sqlalchemy.types.Boolean()
-                elif col in ['user_message', 'assistant']:
-                    # Map text columns to NVARCHAR(MAX) explicitly
-                    dtype_mapping[col] = sqlalchemy.types.Text()
+                # Removed sensitive column mapping - no longer processing these columns
                 elif col in ['file_size', 'daily_requests_count']:
                     # Map integer columns
                     dtype_mapping[col] = sqlalchemy.types.BigInteger()
@@ -577,18 +575,37 @@ class SQLServerConnection:
                 elif col in boolean_columns:
                     # Map boolean columns to BIT
                     dtype_mapping[col] = sqlalchemy.types.Boolean()
-                elif col in ['user_message', 'assistant']:
-                    # Map text columns to NVARCHAR(MAX) explicitly for Vietnamese support
-                    dtype_mapping[col] = sqlalchemy.types.UnicodeText()
+                # Removed sensitive column mapping - no longer processing these columns
             
             # Handle UUID columns - ensure proper string format and handle NULLs
             uuid_columns = ['id', 'user_id', 'brain_id', 'chat_id', 'message_id', 'prompt_id', 'parent_id']
             for col in uuid_columns:
                 if col in df_copy.columns:
-                    # Convert UUID objects to string format and handle NULLs
-                    df_copy[col] = df_copy[col].apply(
-                        lambda x: str(x) if x is not None and pd.notna(x) else None
-                    )
+                    # Convert UUID objects to string format and handle NULLs/empty strings
+                    def clean_uuid(x):
+                        if x is None or pd.isna(x) or x == '' or str(x).strip() == '':
+                            return None
+                        try:
+                            # Ensure it's a valid UUID format
+                            import uuid
+                            uuid_str = str(x).strip()
+                            # Validate UUID format
+                            uuid.UUID(uuid_str)
+                            return uuid_str
+                        except (ValueError, AttributeError):
+                            logger.warning(f"Invalid UUID format for column {col}: {x}")
+                            return None
+                    
+                    df_copy[col] = df_copy[col].apply(clean_uuid)
+            
+            # Filter out rows with invalid primary keys
+            for pk in primary_keys:
+                if pk in df_copy.columns:
+                    initial_count = len(df_copy)
+                    df_copy = df_copy[df_copy[pk].notna()]
+                    filtered_count = len(df_copy)
+                    if initial_count != filtered_count:
+                        logger.info(f"Filtered out {initial_count - filtered_count} rows with null primary key {pk}")
             
             # For chat_history table, use small batch processing to handle Vietnamese characters
             if table_name == 'chat_history':
@@ -662,8 +679,7 @@ class SQLServerConnection:
                 pass
             raise
     
-    def _process_chat_history_with_small_batches(self, df: pd.DataFrame, table_name: str, 
-                                               primary_keys: list[str], schema: str, dtype_mapping: dict) -> int:
+    def _process_chat_history_with_small_batches(self, df: pd.DataFrame, table_name: str, primary_keys: list[str], schema: str, dtype_mapping: dict) -> int:
         """Process chat_history with small batches to handle Vietnamese encoding issues"""
         logger.info(f"Processing chat_history with small batches due to Vietnamese encoding concerns")
         
@@ -671,10 +687,31 @@ class SQLServerConnection:
         uuid_columns = ['id', 'user_id', 'brain_id', 'chat_id', 'message_id', 'prompt_id', 'parent_id']
         for col in uuid_columns:
             if col in df.columns:
-                # Convert UUID objects to string format and handle NULLs
-                df[col] = df[col].apply(
-                    lambda x: str(x) if x is not None and pd.notna(x) else None
-                )
+                # Convert UUID objects to string format and handle NULLs/empty strings
+                def clean_uuid(x):
+                    if x is None or pd.isna(x) or x == '' or str(x).strip() == '':
+                        return None
+                    try:
+                        # Ensure it's a valid UUID format
+                        import uuid
+                        uuid_str = str(x).strip()
+                        # Validate UUID format
+                        uuid.UUID(uuid_str)
+                        return uuid_str
+                    except (ValueError, AttributeError):
+                        logger.warning(f"Invalid UUID format for column {col}: {x}")
+                        return None
+                
+                df[col] = df[col].apply(clean_uuid)
+        
+        # Filter out rows with invalid primary keys
+        for pk in primary_keys:
+            if pk in df.columns:
+                initial_count = len(df)
+                df = df[df[pk].notna()]
+                filtered_count = len(df)
+                if initial_count != filtered_count:
+                    logger.info(f"Filtered out {initial_count - filtered_count} rows with null primary key {pk}")
         
         batch_size = 5  # Even smaller batches for ultra-conservative processing
         total_rows = len(df)

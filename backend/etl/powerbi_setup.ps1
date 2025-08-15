@@ -113,58 +113,7 @@ Server=$SqlServerHost,$SqlServerPort;Database=$Database;User Id=$Username;Passwo
 Write-Host $connectionInfo -ForegroundColor Cyan
 
 # =============================================
-# 4. Chuẩn bị và mở Power BI Data Source (.pbids / .pbit)
-# =============================================
-
-try {
-    $pbitSrc = Join-Path -Path (Get-Location) -ChildPath "Quivr_Analytics.pbit"
-    $pbidsSrc = Join-Path -Path (Get-Location) -ChildPath "Quivr_Analytics.pbids"
-
-    $desktopDir = [Environment]::GetFolderPath("Desktop")
-    $desktopPbit = Join-Path -Path $desktopDir -ChildPath "Quivr_Analytics.pbit"
-    $desktopPbids = Join-Path -Path $desktopDir -ChildPath "Quivr_Analytics.pbids"
-
-    $fileToCopy = $null
-    $destPath = $null
-
-    if (Test-Path $pbitSrc) {
-        $fileToCopy = $pbitSrc
-        $destPath = $desktopPbit
-        Write-Host "Found Quivr_Analytics.pbit template. Using .pbit." -ForegroundColor Green
-    } elseif (Test-Path $pbidsSrc) {
-        $fileToCopy = $pbidsSrc
-        $destPath = $desktopPbids
-        Write-Host "Template (.pbit) not found. Using Quivr_Analytics.pbids as data source." -ForegroundColor Yellow
-    }
-
-    if ($fileToCopy) {
-        Copy-Item -Path $fileToCopy -Destination $destPath -Force
-        Write-Host "Copied to Desktop: $destPath" -ForegroundColor Green
-
-        # Thử mở bằng Power BI Desktop nếu có cài đặt
-        $possiblePaths = @(
-            "$Env:ProgramFiles\Microsoft Power BI Desktop\bin\PBIDesktop.exe",
-            "$Env:ProgramFiles\WindowsApps\Microsoft.MicrosoftPowerBIDesktop_*\PBIDesktop.exe",
-            "$Env:LOCALAPPDATA\Microsoft\WindowsApps\PBIDesktop.exe"
-        )
-
-        $pbiExe = $possiblePaths | Where-Object { Test-Path $_ } | Select-Object -First 1
-        if ($pbiExe) {
-            Start-Process -FilePath $pbiExe -ArgumentList "`"$destPath`""
-            Write-Host "Launching Power BI Desktop with $([System.IO.Path]::GetFileName($destPath))..." -ForegroundColor Green
-        } else {
-            Write-Host "Power BI Desktop not found in default locations. Open the file manually from Desktop." -ForegroundColor Yellow
-        }
-    } else {
-        Write-Host "Neither Quivr_Analytics.pbit nor Quivr_Analytics.pbids found in the script directory." -ForegroundColor Red
-    }
-}
-catch {
-    Write-Host "Failed to prepare/open Power BI file: $($_.Exception.Message)" -ForegroundColor Red
-}
-
-# =============================================
-# 5. Hiển thị hướng dẫn sử dụng
+# 4. Hiển thị hướng dẫn sử dụng
 # =============================================
 
 Write-Host "`nPowerBI Setup Guide:" -ForegroundColor Yellow
@@ -205,7 +154,7 @@ Daily Active Users = CALCULATE(DISTINCTCOUNT(User_Daily_Usage[user_id]), User_Da
 "@ -ForegroundColor Cyan
 
 # =============================================
-# 6. Summary
+# 5. Summary
 # =============================================
 
 Write-Host "`nPowerBI Setup Complete!" -ForegroundColor Green

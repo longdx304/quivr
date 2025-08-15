@@ -61,8 +61,8 @@ class ETLConfig(BaseSettings):
             "knowledge",
             "brains_users",
             "user_daily_usage",
-            "chats"
-            # "chat_history"  # DISABLED - Vietnamese encoding issues
+            "chats",
+            "chat_history"  # DISABLED - Vietnamese encoding issues
         ],
         description="List of tables to synchronize"
     )
@@ -72,16 +72,20 @@ class ETLConfig(BaseSettings):
         default={
             "user_daily_usage": "date",
             "knowledge": "id",
-            "chats": "creation_time"
-            # "chat_history": "message_time"  # DISABLED - Vietnamese encoding issues
+            "chats": "creation_time",
+            "chat_history": "message_time"  # DISABLED - Vietnamese encoding issues
         },
         description="Tables with incremental sync and their timestamp/ID columns"
     )
     
-    # Data transformation rules
+    # Data transformation rules - exclude sensitive columns
     EXCLUDE_COLUMNS: dict[str, list[str]] = Field(
         default={
             "users": [],  # Could exclude PII if needed
+            "brains": ["name", "description"],  # Exclude sensitive brain data
+            "chats": ["chat_name"],  # Exclude sensitive chat names
+            "chat_history": ["user_message", "assistant"],  # Exclude sensitive message content
+            "knowledge": ["file_name"],  # Exclude sensitive file names
         },
         description="Columns to exclude from sync per table"
     )
@@ -94,8 +98,8 @@ class ETLConfig(BaseSettings):
             'knowledge': ['id'],
             'brains_users': ['brain_id', 'user_id'],
             'user_daily_usage': ['user_id', 'date'],
-            'chats': ['chat_id']
-            # 'chat_history': ['message_id']  # DISABLED - Vietnamese encoding issues
+            'chats': ['chat_id'],
+            'chat_history': ['message_id']  # DISABLED - Vietnamese encoding issues
         },
         description="Primary key columns for each table (used for UPSERT operations)"
     )

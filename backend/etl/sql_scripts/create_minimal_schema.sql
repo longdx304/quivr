@@ -84,17 +84,15 @@ ELSE
     PRINT 'Table dwh.users already exists'
 GO
 
--- Brains table (with additional columns from Supabase, excluding metadata columns)
+-- Brains table (with additional columns from Supabase, excluding metadata columns and sensitive data)
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dwh' AND TABLE_NAME = 'brains')
 BEGIN
     CREATE TABLE [dwh].[brains] (
         [brain_id] UNIQUEIDENTIFIER PRIMARY KEY,
-        [name] NVARCHAR(255),
         [status] NVARCHAR(50),
         [model] NVARCHAR(100),
         [max_tokens] INT,
         [temperature] FLOAT,
-        [description] NVARCHAR(MAX),
         [prompt_id] UNIQUEIDENTIFIER,
         [last_update] DATETIME2(7),
         [brain_type] NVARCHAR(20),
@@ -172,14 +170,13 @@ ELSE
     PRINT 'Table dwh.user_daily_usage already exists'
 GO
 
--- Chats table (allowing NULL user_id for Zalo chats)
+-- Chats table (allowing NULL user_id for Zalo chats, excluding sensitive data)
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dwh' AND TABLE_NAME = 'chats')
 BEGIN
     CREATE TABLE [dwh].[chats] (
         [chat_id] UNIQUEIDENTIFIER PRIMARY KEY,
         [user_id] UNIQUEIDENTIFIER NULL, -- Allow NULL for Zalo chats
         [creation_time] DATETIME2(7),
-        [chat_name] NVARCHAR(255),
         [zalo_user_id] NVARCHAR(255),
         [etl_inserted_at] DATETIME2(7) DEFAULT GETUTCDATE()
     )
@@ -189,18 +186,16 @@ ELSE
     PRINT 'Table dwh.chats already exists'
 GO
 
--- Chat history table
+-- Chat history table (excluding sensitive message content)
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dwh' AND TABLE_NAME = 'chat_history')
 BEGIN
     CREATE TABLE [dwh].[chat_history] (
         [message_id] UNIQUEIDENTIFIER PRIMARY KEY,
         [chat_id] UNIQUEIDENTIFIER NOT NULL,
-        [user_message] NVARCHAR(MAX) COLLATE Vietnamese_CI_AI,
-        [assistant] NVARCHAR(MAX) COLLATE Vietnamese_CI_AI,
         [message_time] DATETIME2(7),
-        [brain_id] UNIQUEIDENTIFIER,
-        [prompt_id] UNIQUEIDENTIFIER,
-        [thumbs] BIT,
+        [brain_id] UNIQUEIDENTIFIER NULL,
+        [prompt_id] UNIQUEIDENTIFIER NULL,
+        [thumbs] BIT NULL,
         [etl_inserted_at] DATETIME2(7) DEFAULT GETUTCDATE()
     )
     PRINT 'Created table: dwh.chat_history'

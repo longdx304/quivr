@@ -154,76 +154,10 @@ class UserExtractor(BaseExtractor):
         return df
 
 class ChatHistoryExtractor(BaseExtractor):
-    """Extractor for chat_history table with special handling for large text"""
+    """Extractor for chat_history table - now excludes sensitive message content"""
     
     def __init__(self):
         super().__init__('chat_history')
-    
-    def _clean_and_encode_vietnamese_text(self, text):
-        """Ultra-conservative Vietnamese text processing for SQL Server"""
-        if not isinstance(text, str) or text is None:
-            return text
-        
-        try:
-            # Step 1: Basic string length check - be very conservative
-            if len(text) > 8000:  # Much more conservative limit
-                text = text[:8000]
-            
-            # Step 2: Unicode normalization specifically for Vietnamese
-            import unicodedata
-            text = unicodedata.normalize('NFC', text)
-            
-            # Step 3: Remove ALL potentially problematic characters
-            # Keep only basic Latin, Vietnamese accented characters, and common punctuation
-            import re
-            
-            # Define allowed Vietnamese characters explicitly
-            vietnamese_chars = (
-                r'a-zA-Z0-9\s'  # Basic Latin and numbers
-                r'àáảãạâầấẩẫậăằắẳẵặ'  # Vietnamese a variants
-                r'èéẻẽẹêềếểễệ'  # Vietnamese e variants
-                r'ìíỉĩị'  # Vietnamese i variants
-                r'òóỏõọôồốổỗộơờớởỡợ'  # Vietnamese o variants
-                r'ùúủũụưừứửữự'  # Vietnamese u variants
-                r'ỳýỷỹỵ'  # Vietnamese y variants
-                r'đ'  # Vietnamese đ
-                r'ÀÁẢÃẠÂẦẤẨẪẬĂẰẮẲẴẶ'  # Uppercase Vietnamese a
-                r'ÈÉẺẼẸÊỀẾỂỄỆ'  # Uppercase Vietnamese e
-                r'ÌÍỈĨỊ'  # Uppercase Vietnamese i
-                r'ÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢ'  # Uppercase Vietnamese o
-                r'ÙÚỦŨỤƯỪỨỬỮỰ'  # Uppercase Vietnamese u
-                r'ỲÝỶỸỴ'  # Uppercase Vietnamese y
-                r'Đ'  # Uppercase Vietnamese Đ
-                r'\.\,\!\?\:\;\-\(\)\[\]'  # Basic punctuation
-                r'\n\r\t'  # Whitespace characters
-            )
-            
-            # Keep only allowed characters
-            allowed_pattern = f'[{vietnamese_chars}]'
-            text = ''.join(re.findall(allowed_pattern, text))
-            
-            # Step 4: Clean up excessive whitespace
-            text = re.sub(r'\s+', ' ', text)
-            text = text.strip()
-            
-            # Step 5: Final length and encoding check
-            if len(text) == 0:
-                return None
-                
-            # Test UTF-8 encoding
-            encoded = text.encode('utf-8')
-            if len(encoded) > 16000:  # Very conservative byte limit
-                # Truncate by characters this time since we've cleaned the text
-                text = text[:4000]  # Even more conservative
-                encoded = text.encode('utf-8')
-            
-            # Final validation
-            decoded = encoded.decode('utf-8')
-            return decoded
-            
-        except Exception as e:
-            logger.warning(f"Vietnamese text processing failed: {e}")
-            return None
     
     def transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
         df = super().transform_data(df)
@@ -231,54 +165,12 @@ class ChatHistoryExtractor(BaseExtractor):
         if df.empty:
             return df
         
-        initial_count = len(df)
-        logger.info(f"ChatHistoryExtractor: Starting Vietnamese text processing for {initial_count} records")
+        # Handle thumbs column
+        if 'thumbs' in df.columns:
+            df['thumbs'] = df['thumbs'].apply(lambda x: None if pd.isna(x) or x is None else bool(x))
         
-        # Process records one by one with ultra-conservative approach
-        processed_records = []
-        
-        for idx, row in df.iterrows():
-            try:
-                message_id = row.get('message_id', f'unknown_{idx}')
-                
-                # Process user_message
-                if 'user_message' in row and isinstance(row['user_message'], str):
-                    cleaned_user = self._clean_and_encode_vietnamese_text(row['user_message'])
-                    if cleaned_user is None:
-                        logger.warning(f"Skipping record {message_id} - user_message failed processing")
-                        continue
-                    row['user_message'] = cleaned_user
-                
-                # Process assistant response
-                if 'assistant' in row and isinstance(row['assistant'], str):
-                    cleaned_assistant = self._clean_and_encode_vietnamese_text(row['assistant'])
-                    if cleaned_assistant is None:
-                        logger.warning(f"Skipping record {message_id} - assistant response failed processing")
-                        continue
-                    row['assistant'] = cleaned_assistant
-                
-                # Handle thumbs column
-                if 'thumbs' in row:
-                    row['thumbs'] = None if pd.isna(row['thumbs']) or row['thumbs'] is None else bool(row['thumbs'])
-                
-                processed_records.append(row)
-                
-            except Exception as e:
-                logger.warning(f"Failed to process record {idx}: {e}")
-                continue
-        
-        # Create new dataframe from processed records
-        if processed_records:
-            df_processed = pd.DataFrame(processed_records)
-            # Ensure we maintain the same column order
-            df_processed = df_processed.reindex(columns=df.columns)
-        else:
-            df_processed = df.iloc[0:0].copy()  # Empty dataframe with same structure
-        
-        final_count = len(df_processed)
-        logger.info(f"ChatHistoryExtractor: Vietnamese processing complete - {final_count}/{initial_count} records passed")
-        
-        return df_processed
+        logger.info(f"ChatHistoryExtractor: Processed {len(df)} records (excluding sensitive content)")
+        return df
 
 class VectorExtractor(BaseExtractor):
     """Extractor for vectors table (excluding actual embeddings)"""
