@@ -58,6 +58,7 @@ class VectorRepository(BaseRepository):
                 v.metadata AS vector_metadata,
                 v.embedding AS vector_embedding,
                 1 - (v.embedding <=> (:query_embedding)::vector) AS calculated_similarity,
+                (v.metadata->>'chunk_size')::integer AS chunk_size
             FROM
                 vectors v
             INNER JOIN
