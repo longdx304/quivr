@@ -155,21 +155,66 @@ ELSE
     PRINT 'Table dwh.brains_users already exists'
 GO
 
--- User daily usage table
+-- User daily usage table with date column migration support
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dwh' AND TABLE_NAME = 'user_daily_usage')
 BEGIN
+    -- Create new table with correct DATE type
     CREATE TABLE [dwh].[user_daily_usage] (
         [user_id] UNIQUEIDENTIFIER,
         [email] NVARCHAR(255),
-        [date] NVARCHAR(10),
+        [date] DATE,
         [daily_requests_count] INT,
         [etl_inserted_at] DATETIME2(7) DEFAULT GETUTCDATE(),
         CONSTRAINT [PK_user_daily_usage] PRIMARY KEY ([user_id], [date])
     )
-    PRINT 'Created table: dwh.user_daily_usage'
+    PRINT 'Created table: dwh.user_daily_usage with DATE type'
 END
 ELSE
-    PRINT 'Table dwh.user_daily_usage already exists'
+BEGIN
+    -- Check if existing table has wrong date column type (NVARCHAR) and fix it
+    IF EXISTS (
+        SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = 'dwh' 
+        AND TABLE_NAME = 'user_daily_usage' 
+        AND COLUMN_NAME = 'date' 
+        AND DATA_TYPE = 'nvarchar'
+    )
+    BEGIN
+        PRINT 'Migrating user_daily_usage.date column from NVARCHAR to DATE...'
+        
+        -- Create temporary table with correct structure
+        CREATE TABLE [dwh].[user_daily_usage_temp] (
+            [user_id] UNIQUEIDENTIFIER,
+            [email] NVARCHAR(255),
+            [date] DATE,
+            [daily_requests_count] INT,
+            [etl_inserted_at] DATETIME2(7) DEFAULT GETUTCDATE(),
+            CONSTRAINT [PK_user_daily_usage_temp] PRIMARY KEY ([user_id], [date])
+        )
+        
+        -- Copy data with date conversion (only valid dates)
+        INSERT INTO [dwh].[user_daily_usage_temp] ([user_id], [email], [date], [daily_requests_count], [etl_inserted_at])
+        SELECT 
+            [user_id],
+            [email],
+            CONVERT(DATE, [date]) AS [date],
+            [daily_requests_count],
+            [etl_inserted_at]
+        FROM [dwh].[user_daily_usage]
+        WHERE TRY_CONVERT(DATE, [date]) IS NOT NULL
+        
+        -- Drop original table and rename temp table
+        DROP TABLE [dwh].[user_daily_usage]
+        EXEC sp_rename '[dwh].[user_daily_usage_temp]', 'user_daily_usage'
+        EXEC sp_rename '[dwh].[PK_user_daily_usage_temp]', 'PK_user_daily_usage'
+        
+        PRINT 'Successfully migrated user_daily_usage.date column to DATE type'
+    END
+    ELSE
+    BEGIN
+        PRINT 'Table dwh.user_daily_usage already exists with correct DATE type'
+    END
+END
 GO
 
 -- Chats table (allowing NULL user_id for Zalo chats)

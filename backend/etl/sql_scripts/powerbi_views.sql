@@ -22,7 +22,7 @@ SELECT
     (SELECT COUNT(*) FROM dwh.knowledge) AS total_documents,
     (SELECT COUNT(*) FROM dwh.chats) AS total_chats,
     (SELECT COUNT(*) FROM dwh.chat_history) AS total_messages,
-    (SELECT COUNT(DISTINCT user_id) FROM dwh.user_daily_usage WHERE date = CONVERT(VARCHAR(10), GETDATE(), 120)) AS daily_active_users,
+    (SELECT COUNT(DISTINCT user_id) FROM dwh.user_daily_usage WHERE CONVERT(DATE, date) = CONVERT(DATE, GETDATE())) AS daily_active_users,
     (SELECT AVG(CAST(daily_requests_count AS FLOAT)) FROM dwh.user_daily_usage) AS avg_daily_requests
 GO
 
@@ -52,7 +52,7 @@ GO
 
 CREATE VIEW [dwh].[v_daily_user_activity] AS
 SELECT 
-    udu.date,
+    CONVERT(DATE, udu.date) AS date,
     COUNT(DISTINCT udu.user_id) AS active_users,
     SUM(udu.daily_requests_count) AS total_requests,
     AVG(CAST(udu.daily_requests_count AS FLOAT)) AS avg_requests_per_user,
@@ -60,9 +60,9 @@ SELECT
     COUNT(DISTINCT ch.message_id) AS total_messages
 FROM dwh.user_daily_usage udu
 LEFT JOIN dwh.chats c ON udu.user_id = c.user_id 
-    AND CONVERT(DATE, c.creation_time) = udu.date
+    AND CONVERT(DATE, c.creation_time) = CONVERT(DATE, udu.date)
 LEFT JOIN dwh.chat_history ch ON c.chat_id = ch.chat_id
-GROUP BY udu.date
+GROUP BY CONVERT(DATE, udu.date)
 GO
 
 -- View top users theo hoạt động
@@ -76,7 +76,7 @@ SELECT TOP 50
     COUNT(DISTINCT c.chat_id) AS total_chats,
     COUNT(DISTINCT ch.message_id) AS total_messages,
     SUM(udu.daily_requests_count) AS total_requests,
-    MAX(udu.date) AS last_activity_date
+    MAX(CONVERT(DATE, udu.date)) AS last_activity_date
 FROM dwh.users u
 LEFT JOIN dwh.chats c ON u.id = c.user_id
 LEFT JOIN dwh.chat_history ch ON c.chat_id = ch.chat_id
@@ -270,7 +270,7 @@ BEGIN
         COUNT(DISTINCT user_id) AS metric_value,
         'Count' AS metric_type
     FROM dwh.user_daily_usage
-    WHERE date BETWEEN CONVERT(VARCHAR(10), @date_from, 120) AND CONVERT(VARCHAR(10), @date_to, 120)
+    WHERE CONVERT(DATE, date) BETWEEN @date_from AND @date_to
 END
 GO
 

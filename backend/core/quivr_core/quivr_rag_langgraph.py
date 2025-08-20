@@ -9,7 +9,7 @@ from langchain_cohere import CohereRerank
 from langchain_community.document_compressors import JinaRerank
 from langchain_core.callbacks import Callbacks
 from langchain_core.documents import BaseDocumentCompressor, Document
-from langchain_core.messages import BaseMessage, AIMessage
+from langchain_core.messages import BaseMessage
 from langchain_core.messages.ai import AIMessageChunk
 from langchain_core.vectorstores import VectorStore
 from langgraph.graph import END, START, StateGraph
@@ -126,13 +126,7 @@ class QuivrQARAGLangGraph:
             VectorStoreRetriever: The retriever with strict relevance filtering.
         """
         if self.vector_store:
-            # Default strict retriever; fallbacks will adjust if empty
-            return self.vector_store.as_retriever(
-                search_kwargs={
-                    "k": 50,
-                    "threshold": 0.7,
-                }
-            )
+            return self.vector_store.as_retriever()
         else:
             raise ValueError("No vector store provided")
 
@@ -212,20 +206,20 @@ class QuivrQARAGLangGraph:
         )
         
         # Fallback 1: lower threshold, increase k
-        if not docs or len(docs) == 0:
-            try:
-                fallback_retriever = self.vector_store.as_retriever(
-                    search_kwargs={"k": 70, "threshold": 0.55}
-                )
-                fallback_ccr = ContextualCompressionRetriever(
-                    base_compressor=self.reranker, base_retriever=fallback_retriever
-                )
-                docs = fallback_ccr.invoke(question)
-                logger.info(
-                    f"Fallback threshold=0.6 k=70 returned {len(docs)} documents for query: {question[:100]}..."
-                )
-            except Exception as e:
-                logger.warning(f"Fallback 0.6 failed: {e}")
+        # if not docs or len(docs) == 0:
+        #     try:
+        #         fallback_retriever = self.vector_store.as_retriever(
+        #             search_kwargs={"k": 70, "threshold": 0.55}
+        #         )
+        #         fallback_ccr = ContextualCompressionRetriever(
+        #             base_compressor=self.reranker, base_retriever=fallback_retriever
+        #         )
+        #         docs = fallback_ccr.invoke(question)
+        #         logger.info(
+        #             f"Fallback threshold=0.6 k=70 returned {len(docs)} documents for query: {question[:100]}..."
+        #         )
+        #     except Exception as e:
+        #         logger.warning(f"Fallback 0.6 failed: {e}")
         return {"docs": docs}
 
     def generate_rag(self, state):
@@ -246,15 +240,15 @@ class QuivrQARAGLangGraph:
         docs = state["docs"]
         logger.info(f"Docs: {docs}")
         # Check if docs is empty and return appropriate response
-        if not docs or len(docs) == 0:
-            no_info_response = AIMessage(
-                content="Tôi không có thông tin để trả lời câu hỏi của bạn. Vui lòng cung cấp thêm thông tin hoặc tài liệu để tôi có thể hỗ trợ bạn tốt hơn."
-            )
-            formatted_response = {
-                "answer": no_info_response,
-                "docs": [],
-            }
-            return {"messages": [no_info_response], "final_response": formatted_response}
+        # if not docs or len(docs) == 0:
+        #     no_info_response = AIMessage(
+        #         content="Tôi không có thông tin để trả lời câu hỏi của bạn. Vui lòng cung cấp thêm thông tin hoặc tài liệu để tôi có thể hỗ trợ bạn tốt hơn."
+        #     )
+        #     formatted_response = {
+        #         "answer": no_info_response,
+        #         "docs": [],
+        #     }
+        #     return {"messages": [no_info_response], "final_response": formatted_response}
 
         # Prompt
         prompt = self.retrieval_config.prompt
@@ -429,17 +423,17 @@ class QuivrQARAGLangGraph:
         )
         
         # Check if the response indicates no docs were found
-        if "final_response" in raw_llm_response and "docs" in raw_llm_response["final_response"]:
-            docs = raw_llm_response["final_response"]["docs"]
-            if not docs or len(docs) == 0:
-                logger.info("No docs found in response, creating fallback response")
-                # Create a fallback response for empty docs case
-                fallback_response = ParsedRAGResponse(
-                    answer="Tôi không có thông tin để trả lời câu hỏi của bạn. Vui lòng cung cấp thêm thông tin hoặc tài liệu để tôi có thể hỗ trợ bạn tốt hơn.",
-                    sources=[],
-                    metadata=RAGResponseMetadata(),
-                )
-                return fallback_response
+        # if "final_response" in raw_llm_response and "docs" in raw_llm_response["final_response"]:
+        #     docs = raw_llm_response["final_response"]["docs"]
+        #     if not docs or len(docs) == 0:
+        #         logger.info("No docs found in response, creating fallback response")
+        #         # Create a fallback response for empty docs case
+        #         fallback_response = ParsedRAGResponse(
+        #             answer="Tôi không có thông tin để trả lời câu hỏi của bạn. Vui lòng cung cấp thêm thông tin hoặc tài liệu để tôi có thể hỗ trợ bạn tốt hơn.",
+        #             sources=[],
+        #             metadata=RAGResponseMetadata(),
+        #         )
+        #         return fallback_response
         
         response = parse_response(
             raw_llm_response["final_response"], self.retrieval_config.llm_config.model
@@ -535,11 +529,11 @@ class QuivrQARAGLangGraph:
 
         logger.info(f"chunk_id: {chunk_id}")
         # Emit fallback content when no chunks were streamed (e.g., docs == 0)
-        if chunk_id == 0:
-            yield ParsedRAGChunkResponse(
-                answer="Tôi không có thông tin để trả lời câu hỏi của bạn. Vui lòng cung cấp thêm thông tin hoặc tài liệu để tôi có thể hỗ trợ bạn tốt hơn.",
-                metadata=RAGResponseMetadata(),
-            )
+        # if chunk_id == 0:
+        #     yield ParsedRAGChunkResponse(
+        #         answer="Tôi không có thông tin để trả lời câu hỏi của bạn. Vui lòng cung cấp thêm thông tin hoặc tài liệu để tôi có thể hỗ trợ bạn tốt hơn.",
+        #         metadata=RAGResponseMetadata(),
+        #     )
 
         # Last chunk provides metadata
         last_chunk = ParsedRAGChunkResponse(

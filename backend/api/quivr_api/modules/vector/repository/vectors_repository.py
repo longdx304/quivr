@@ -46,7 +46,6 @@ class VectorRepository(BaseRepository):
         brain_id: UUID,
         k: int = 40,
         max_chunk_sum: int = 10000,  # Example value
-        similarity_threshold: float = 0.7,  # Strict threshold for semantic relevance
         **kwargs: Any,
     ) -> Sequence[SimilaritySearchOutput]:
         sql_query = text("""
@@ -59,14 +58,12 @@ class VectorRepository(BaseRepository):
                 v.metadata AS vector_metadata,
                 v.embedding AS vector_embedding,
                 1 - (v.embedding <=> (:query_embedding)::vector) AS calculated_similarity,
-                COALESCE((v.metadata->>'chunk_size')::integer, 500) AS chunk_size
             FROM
                 vectors v
             INNER JOIN
                 knowledge_brain kb ON v.knowledge_id = kb.knowledge_id
             WHERE
                 kb.brain_id = :p_brain_id
-                AND (1 - (v.embedding <=> (:query_embedding)::vector)) >= :similarity_threshold
             ORDER BY
                 calculated_similarity DESC
         ), filtered_vectors AS (
@@ -100,7 +97,6 @@ class VectorRepository(BaseRepository):
             "p_brain_id": brain_id,
             "k": k,
             "max_chunk_sum": max_chunk_sum,
-            "similarity_threshold": similarity_threshold,
         }
 
         result = self.session.execute(sql_query, params=params)
