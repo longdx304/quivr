@@ -249,7 +249,7 @@ class QuivrQARAG:
         # Last chunk provides metadata
         last_chunk = ParsedRAGChunkResponse(
             answer="",
-            metadata=get_chunk_metadata(rolling_message, sources),
+            metadata=get_chunk_metadata(rolling_message, sources, question),
             last_chunk=True,
         )
         logger.debug(

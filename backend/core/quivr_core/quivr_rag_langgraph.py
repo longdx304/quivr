@@ -188,38 +188,149 @@ class QuivrQARAGLangGraph:
         response = model.invoke(msg)
         return {"messages": [response]}
 
+    def _analyze_query_comprehensiveness_need(self, question: str) -> dict:
+        """
+        Dynamically analyze if query requires comprehensive/detailed retrieval
+        Returns: {"needs_comprehensive": bool, "confidence": float, "strategy": str}
+        """
+        question_lower = question.lower()
+        
+        # Indicators of comprehensive content need
+        comprehensive_indicators = {
+            # Specific reference patterns (articles, sections, rules, etc.)
+            "specific_references": any(pattern in question_lower for pattern in [
+                r'\b\d+\b',  # Contains numbers (like "17", "section 5")
+                'chi tiết', 'cụ thể', 'đầy đủ', 'tất cả', 'toàn bộ'
+            ]),
+            
+            # Definitive/explanatory queries
+            "explanatory_intent": any(phrase in question_lower for phrase in [
+                'là gì', 'what is', 'explain', 'giải thích', 'nêu rõ', 'trình bày'
+            ]),
+            
+            # Structured content queries (likely to have multiple parts)
+            "structured_content": any(term in question_lower for term in [
+                'trách nhiệm', 'nghĩa vụ', 'quy định', 'điều khoản', 'provisions', 'requirements'
+            ]),
+            
+            # Comprehensive scope words
+            "scope_indicators": any(word in question_lower for word in [
+                'bao gồm', 'gồm có', 'include', 'comprise', 'consist'
+            ])
+        }
+        
+        # Calculate confidence score
+        positive_indicators = sum(comprehensive_indicators.values())
+        confidence = min(positive_indicators * 0.3, 1.0)  # Max confidence 1.0
+        
+        # Boost confidence for numbered references
+        import re
+        if re.search(r'(điều|article|section|mục|khoản)\s*\d+', question_lower):
+            confidence = min(confidence + 0.4, 1.0)
+        
+        needs_comprehensive = confidence >= 0.3
+        
+        strategy = "comprehensive" if needs_comprehensive else "standard"
+        
+        logger.info(f"Query analysis - Comprehensive need: {needs_comprehensive}, Confidence: {confidence:.2f}, Strategy: {strategy}")
+        
+        return {
+            "needs_comprehensive": needs_comprehensive,
+            "confidence": confidence,
+            "strategy": strategy,
+            "indicators": comprehensive_indicators
+        }
+
     def retrieve(self, state):
         """
-        Retrieve relevant chunks with strict relevance filtering
+        Dynamic retrieval with adaptive strategies based on query analysis
 
         Args:
             state (messages): The current state
 
         Returns:
-            dict: The retrieved chunks (empty if no relevant documents found)
+            dict: The retrieved chunks optimized for query type
         """
         question = state["messages"][-1].content
-        # Try strict search first
-        docs = self.compression_retriever.invoke(question)
-        logger.info(
-            f"Retrieved {len(docs)} documents at threshold=0.7 k=40 for query: {question[:100]}..."
-        )
         
-        # Fallback 1: lower threshold, increase k
-        # if not docs or len(docs) == 0:
-        #     try:
-        #         fallback_retriever = self.vector_store.as_retriever(
-        #             search_kwargs={"k": 70, "threshold": 0.55}
-        #         )
-        #         fallback_ccr = ContextualCompressionRetriever(
-        #             base_compressor=self.reranker, base_retriever=fallback_retriever
-        #         )
-        #         docs = fallback_ccr.invoke(question)
-        #         logger.info(
-        #             f"Fallback threshold=0.6 k=70 returned {len(docs)} documents for query: {question[:100]}..."
-        #         )
-        #     except Exception as e:
-        #         logger.warning(f"Fallback 0.6 failed: {e}")
+        # Analyze query to determine optimal retrieval strategy
+        analysis = self._analyze_query_comprehensiveness_need(question)
+        
+        if analysis["needs_comprehensive"]:
+            # Comprehensive retrieval for detailed/structured content
+            logger.info(f"Using comprehensive retrieval strategy for: {question[:100]}...")
+            
+            # Multi-tiered retrieval for complete content
+            all_docs = []
+            
+            # Tier 1: Standard search
+            try:
+                docs_t1 = self.compression_retriever.invoke(question)
+                all_docs.extend(docs_t1)
+                logger.info(f"Tier 1 (standard): {len(docs_t1)} documents")
+            except Exception as e:
+                logger.warning(f"Tier 1 retrieval failed: {e}")
+            
+            # Tier 2: Broader search with lower threshold
+            try:
+                broad_retriever = self.vector_store.as_retriever(
+                    search_kwargs={"k": 100, "threshold": 0.4}
+                )
+                docs_t2 = broad_retriever.invoke(question)
+                all_docs.extend(docs_t2)
+                logger.info(f"Tier 2 (broad): {len(docs_t2)} documents")
+            except Exception as e:
+                logger.warning(f"Tier 2 retrieval failed: {e}")
+            
+            # Tier 3: Keyword-based search for specific terms
+            try:
+                # Extract key terms for additional search
+                import re
+                key_terms = re.findall(r'\b\w{4,}\b', question)  # Words with 4+ chars
+                for term in key_terms[:3]:  # Limit to top 3 terms
+                    term_retriever = self.vector_store.as_retriever(
+                        search_kwargs={"k": 30, "threshold": 0.3}
+                    )
+                    docs_t3 = term_retriever.invoke(term)
+                    all_docs.extend(docs_t3)
+                logger.info(f"Tier 3 (keyword): processed {len(key_terms[:3])} key terms")
+            except Exception as e:
+                logger.warning(f"Tier 3 retrieval failed: {e}")
+            
+            # Deduplicate while preserving order and relevance
+            seen_content = set()
+            docs = []
+            for doc in all_docs:
+                # Use content hash for deduplication
+                content_hash = hash(doc.page_content.strip())
+                if content_hash not in seen_content:
+                    seen_content.add(content_hash)
+                    docs.append(doc)
+            
+            # Sort by relevance (original order from compression retriever is best)
+            logger.info(f"Comprehensive retrieval: {len(docs)} unique documents from {len(all_docs)} total")
+            
+        else:
+            # Standard focused retrieval for general queries
+            logger.info(f"Using standard retrieval strategy for: {question[:100]}...")
+            
+            docs = self.compression_retriever.invoke(question)
+            logger.info(f"Standard retrieval: {len(docs)} documents")
+            
+            # Fallback only if no results
+            if not docs or len(docs) == 0:
+                try:
+                    fallback_retriever = self.vector_store.as_retriever(
+                        search_kwargs={"k": 50, "threshold": 0.5}
+                    )
+                    fallback_ccr = ContextualCompressionRetriever(
+                        base_compressor=self.reranker, base_retriever=fallback_retriever
+                    )
+                    docs = fallback_ccr.invoke(question)
+                    logger.info(f"Fallback: {len(docs)} documents")
+                except Exception as e:
+                    logger.warning(f"Fallback retrieval failed: {e}")
+        
         return {"docs": docs}
 
     def generate_rag(self, state):
@@ -240,15 +351,15 @@ class QuivrQARAGLangGraph:
         docs = state["docs"]
         logger.info(f"Docs: {docs}")
         # Check if docs is empty and return appropriate response
-        # if not docs or len(docs) == 0:
-        #     no_info_response = AIMessage(
-        #         content="Tôi không có thông tin để trả lời câu hỏi của bạn. Vui lòng cung cấp thêm thông tin hoặc tài liệu để tôi có thể hỗ trợ bạn tốt hơn."
-        #     )
-        #     formatted_response = {
-        #         "answer": no_info_response,
-        #         "docs": [],
-        #     }
-        #     return {"messages": [no_info_response], "final_response": formatted_response}
+        if not docs or len(docs) == 0:
+            no_info_response = AIMessage(
+                content="Tôi không có thông tin để trả lời câu hỏi của bạn. Vui lòng cung cấp thêm thông tin hoặc tài liệu để tôi có thể hỗ trợ bạn tốt hơn."
+            )
+            formatted_response = {
+                "answer": no_info_response,
+                "docs": [],
+            }
+            return {"messages": [no_info_response], "final_response": formatted_response}
 
         # Prompt
         prompt = self.retrieval_config.prompt
@@ -529,16 +640,16 @@ class QuivrQARAGLangGraph:
 
         logger.info(f"chunk_id: {chunk_id}")
         # Emit fallback content when no chunks were streamed (e.g., docs == 0)
-        # if chunk_id == 0:
-        #     yield ParsedRAGChunkResponse(
-        #         answer="Tôi không có thông tin để trả lời câu hỏi của bạn. Vui lòng cung cấp thêm thông tin hoặc tài liệu để tôi có thể hỗ trợ bạn tốt hơn.",
-        #         metadata=RAGResponseMetadata(),
-        #     )
+        if chunk_id == 0:
+            yield ParsedRAGChunkResponse(
+                answer="Tôi không có thông tin để trả lời câu hỏi của bạn. Vui lòng cung cấp thêm thông tin hoặc tài liệu để tôi có thể hỗ trợ bạn tốt hơn.",
+                metadata=RAGResponseMetadata(),
+            )
 
         # Last chunk provides metadata
         last_chunk = ParsedRAGChunkResponse(
             answer="",
-            metadata=get_chunk_metadata(rolling_message, sources),
+            metadata=get_chunk_metadata(rolling_message, sources, question),
             last_chunk=True,
         )
         logger.debug(

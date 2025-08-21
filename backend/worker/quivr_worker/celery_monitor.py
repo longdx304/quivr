@@ -118,7 +118,7 @@ async def handler_loop():
                                 description="An error occurred while updating file status",
                             ),
                         )
-                        return
+                        continue
                 
                 # Only send success notification if knowledge status was updated successfully
                 if knowledge_updated or not event.knowledge_id:

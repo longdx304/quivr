@@ -56,11 +56,85 @@ def cited_answer_filter(tool):
     return tool["name"] == "cited_answer"
 
 
+def filter_sources_by_temporal_context(sources: list[Any], user_question: str) -> list[Any]:
+    """
+    Filter sources to prioritize documents that match the temporal context of user question.
+    This prevents mixing sources from different months/years (e.g., doc_template.md vs doc_template-1.md).
+    """
+    if not sources or len(sources) <= 1:
+        return sources
+    
+    # Extract temporal hints from user question
+    temporal_hints = {
+        "month_4": ["tháng 4", "4/2025", "04/2025", "april"],
+        "month_1": ["tháng 1", "1/2025", "01/2025", "january"],
+        "month_2": ["tháng 2", "2/2025", "02/2025", "february"],
+        "month_3": ["tháng 3", "3/2025", "03/2025", "march"],
+        "month_5": ["tháng 5", "5/2025", "05/2025", "may"],
+    }
+    
+    user_question_lower = user_question.lower()
+    detected_month = None
+    
+    for month, hints in temporal_hints.items():
+        if any(hint in user_question_lower for hint in hints):
+            detected_month = month
+            break
+    
+    # If no temporal hint detected, return all sources
+    if not detected_month:
+        return sources
+    
+    # Group sources by document identifier and temporal context
+    source_groups = {}
+    for source in sources:
+        doc_metadata = getattr(source, 'metadata', {})
+        filename = doc_metadata.get('filename', '')
+        document_month = doc_metadata.get('document_month')
+        document_identifier = doc_metadata.get('document_identifier', filename)
+        
+        # Create grouping key based on temporal context
+        if document_month:
+            month_key = f"month_{document_month}"
+            group_key = f"{month_key}_{document_identifier}"
+        else:
+            # Fallback to filename analysis
+            if "template-1" in filename.lower():
+                group_key = "month_1_" + filename
+            elif "template" in filename.lower() and "-1" not in filename.lower():
+                group_key = "month_4_" + filename
+            else:
+                group_key = "unknown_" + filename
+        
+        if group_key not in source_groups:
+            source_groups[group_key] = []
+        source_groups[group_key].append(source)
+    
+    # Prioritize sources matching detected temporal context
+    if detected_month:
+        matching_sources = []
+        for group_key, group_sources in source_groups.items():
+            if group_key.startswith(detected_month):
+                matching_sources.extend(group_sources)
+        
+        # If we found matching sources, return only those
+        if matching_sources:
+            logger.info(f"Filtered sources to {len(matching_sources)} documents matching temporal context: {detected_month}")
+            return matching_sources
+    
+    # If no specific match, return sources from the largest group (most relevant)
+    largest_group = max(source_groups.values(), key=len) if source_groups else sources
+    return largest_group
+
+
 def get_chunk_metadata(
-    msg: AIMessageChunk, sources: list[Any] | None = None
+    msg: AIMessageChunk, sources: list[Any] | None = None, user_question: str = ""
 ) -> RAGResponseMetadata:
+    # Filter sources by temporal context to prevent mixing documents from different periods
+    filtered_sources = filter_sources_by_temporal_context(sources or [], user_question) if sources else []
+    
     # Initiate the source
-    metadata = {"sources": sources} if sources else {"sources": []}
+    metadata = {"sources": filtered_sources} if filtered_sources else {"sources": []}
     if msg.tool_calls:
         cited_answer = next(x for x in msg.tool_calls if cited_answer_filter(x))
 
